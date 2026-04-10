@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/dashboard_screen.dart';
 import 'supabase_config.dart';
 
 // Función principal - inicializa Supabase antes de lanzar la app
@@ -27,13 +28,35 @@ class AuraApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        fontFamily: 'Montserrat', // Fuente por defecto (puedes cambiarla en pubspec.yaml)
+        fontFamily: 'Montserrat',
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF7C3AED),
           brightness: Brightness.light,
         ),
       ),
-      home: const WelcomeScreen(), // Iniciamos con la pantalla de bienvenida
+      // --- El Router Automático ---
+      // Escucha los cambios en la sesión (Login, Logout, OAuth Callback)
+      home: StreamBuilder<AuthState>(
+        stream: Supabase.instance.client.auth.onAuthStateChange,
+        builder: (context, snapshot) {
+          // Si todavía se está conectando, podemos mostrar un splash rápido
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          // Verificamos si hay una sesión activa
+          final session = snapshot.hasData ? snapshot.data!.session : null;
+
+          if (session != null) {
+            return const DashboardScreen(); // Usuario logueado -> Dashboard
+          } else {
+            return const WelcomeScreen(); // No logueado -> Bienvenida
+          }
+        },
+      ),
     );
   }
 }
+

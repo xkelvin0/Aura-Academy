@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'register_screen.dart'; // Importamos la pantalla de registro
+import 'dashboard_screen.dart'; // Importamos el dashboard
 
 // Pantalla de inicio de sesión de Aura Academy
 class LoginScreen extends StatefulWidget {
@@ -55,14 +56,13 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text.trim(),
       );
 
+      // Navegamos al Dashboard y limpiamos el stack de navegación
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Bienvenido de nuevo!'),
-            backgroundColor: Color(0xFF6366F1),
-          ),
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          (route) => false,
         );
-        // Aquí navegaremos al Dashboard en el futuro
       }
     } on AuthException catch (e) {
       if (mounted) {
@@ -80,6 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+
 
   @override
   void dispose() {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'dashboard_screen.dart'; // Importamos el dashboard
 
 // Pantalla de registro de nuevo usuario
 class RegisterScreen extends StatefulWidget {
@@ -91,7 +92,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               backgroundColor: Color(0xFF6366F1),
             ),
           );
-          Navigator.pop(context); // Regresa al Login
+          // Navegamos al Dashboard (Fase 6)
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+            (route) => false,
+          );
         }
       }
     } on AuthException catch (e) {
