@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'register_screen.dart'; // Importamos la pantalla de registro
 
 // Pantalla de inicio de sesión de Aura Academy
 class LoginScreen extends StatefulWidget {
@@ -354,7 +355,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    // Navegar a la pantalla de Registro
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterScreen(),
+                        ),
+                      );
+                    },
                     child: Text(
                       'Regístrate',
                       style: GoogleFonts.montserrat(
