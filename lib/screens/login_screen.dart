@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'register_screen.dart'; // Importamos la pantalla de registro
 
 // Pantalla de inicio de sesión de Aura Academy
@@ -17,6 +18,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Controla si la contraseña es visible o no
   bool _passwordVisible = false;
+
+  // Función para iniciar sesión con Google
+  Future<void> _loginConGoogle() async {
+    await Supabase.instance.client.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: 'io.supabase.auraacademy://login-callback',
+    );
+  }
+
+  // Función para iniciar sesión con GitHub
+  Future<void> _loginConGitHub() async {
+    await Supabase.instance.client.auth.signInWithOAuth(
+      OAuthProvider.github,
+      redirectTo: 'io.supabase.auraacademy://login-callback',
+    );
+  }
 
   @override
   void dispose() {
@@ -309,10 +326,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 24),
 
-                    // --- Botones de Google y Apple ---
+                    // --- Botones de Google y GitHub ---
                     Row(
                       children: [
-                        // Botón Google (claro)
+                        // Botón Google
                         Expanded(
                           child: _SocialButton(
                             label: 'Google',
@@ -320,19 +337,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             textColor: const Color(0xFF1E293B),
                             icon: const Icon(Icons.g_mobiledata_rounded,
                                 color: Color(0xFF4285F4), size: 28),
-                            onTap: () {},
+                            onTap: _loginConGoogle, // Conectado a Supabase OAuth
                           ),
                         ),
                         const SizedBox(width: 12),
-                        // Botón Apple (oscuro)
+                        // Botón GitHub (reemplaza Apple)
                         Expanded(
                           child: _SocialButton(
-                            label: 'Apple',
+                            label: 'GitHub',
                             backgroundColor: const Color(0xFF1E293B),
                             textColor: Colors.white,
-                            icon: const Icon(Icons.apple_rounded,
-                                color: Colors.white, size: 24),
-                            onTap: () {},
+                            icon: const Icon(Icons.code_rounded,
+                                color: Colors.white, size: 22),
+                            onTap: _loginConGitHub, // Conectado a Supabase OAuth
                           ),
                         ),
                       ],
@@ -385,7 +402,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// Widget reutilizable para los botones sociales (Google y Apple)
+// Widget reutilizable para los botones sociales (Google y GitHub)
 class _SocialButton extends StatelessWidget {
   final String label;
   final Color backgroundColor;

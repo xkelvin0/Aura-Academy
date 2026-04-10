@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Pantalla de registro de nuevo usuario
 class RegisterScreen extends StatefulWidget {
@@ -15,9 +16,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // Estado del ojo de la contraseña y checkbox de términos
+  // Estado del ojo de la contraseña, checkbox de términos y carga
   bool _passwordVisible = false;
   bool _acceptedTerms = false;
+  bool _isLoading = false; // Controla el indicador de carga al registrarse
 
   @override
   void dispose() {
@@ -26,6 +28,88 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  // Función para registrarse con Google
+  Future<void> _registrarConGoogle() async {
+    await Supabase.instance.client.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: 'io.supabase.auraacademy://login-callback',
+    );
+  }
+
+  // Función para registrarse con GitHub
+  Future<void> _registrarConGitHub() async {
+    await Supabase.instance.client.auth.signInWithOAuth(
+      OAuthProvider.github,
+      redirectTo: 'io.supabase.auraacademy://login-callback',
+    );
+  }
+
+  Future<void> _registrarse() async {
+    // Validaciones básicas antes de llamar a Supabase
+    if (_nameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor completa todos los campos')),
+      );
+      return;
+    }
+
+    if (!_acceptedTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Debes aceptar los Términos y Condiciones')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Paso 1: Crear el usuario en Supabase Auth
+      final response = await Supabase.instance.client.auth.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      // Paso 2: Si el usuario se creó, guardamos su perfil en la tabla "perfiles"
+      if (response.user != null) {
+        await Supabase.instance.client.from('perfiles').insert({
+          'id': response.user!.id,
+          'nombre_completo': _nameController.text.trim(),
+          'email': _emailController.text.trim(),
+        });
+
+        if (mounted) {
+          // Mostramos mensaje de éxito y regresamos al Login
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('¡Cuenta creada con éxito! Inicia sesión.'),
+              backgroundColor: Color(0xFF6366F1),
+            ),
+          );
+          Navigator.pop(context); // Regresa al Login
+        }
+      }
+    } on AuthException catch (e) {
+      // Errores de autenticación de Supabase
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
+        );
+      }
+    } catch (e) {
+      // Errores generales de conexión
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al registrarse. Intenta de nuevo.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -254,18 +338,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 32),
 
-              // --- Botón "Registrarse" con gradiente ---
+              // --- Botón "Registrarse" con gradiente y lógica de Supabase ---
               Container(
                 width: double.infinity,
                 height: 56,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                  gradient: LinearGradient(
+                    colors: _isLoading
+                        ? [Colors.grey.shade400, Colors.grey.shade400]
+                        : [const Color(0xFF6366F1), const Color(0xFF8B5CF6)],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
+                  boxShadow: _isLoading ? [] : [
                     BoxShadow(
                       color: const Color(0xFF6366F1).withOpacity(0.4),
                       blurRadius: 20,
@@ -277,22 +363,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   color: Colors.transparent,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(16),
-                    onTap: () {}, // Aquí irá la lógica de registro con Supabase
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Registrarse',
-                          style: GoogleFonts.montserrat(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.arrow_forward_rounded,
-                            color: Colors.white),
-                      ],
+                    // Llama a la función de registro con Supabase
+                    onTap: _isLoading ? null : _registrarse,
+                    child: Center(
+                      child: _isLoading
+                          // Spinner mientras se procesa el registro
+                          ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Registrarse',
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.white,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(Icons.arrow_forward_rounded,
+                                    color: Colors.white),
+                              ],
+                            ),
                     ),
                   ),
                 ),
@@ -335,17 +427,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       label: 'Google',
                       icon: const Icon(Icons.g_mobiledata_rounded,
                           color: Color(0xFF4285F4), size: 28),
-                      onTap: () {},
+                      onTap: _registrarConGoogle, // OAuth con Supabase
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Botón Apple
+                  // Botón GitHub (reemplaza Apple)
                   Expanded(
                     child: _SocialButtonRegister(
-                      label: 'Apple',
-                      icon: const Icon(Icons.apple_rounded,
-                          color: Color(0xFF1E293B), size: 24),
-                      onTap: () {},
+                      label: 'GitHub',
+                      icon: const Icon(Icons.code_rounded,
+                          color: Color(0xFF1E293B), size: 22),
+                      onTap: _registrarConGitHub, // OAuth con Supabase
                     ),
                   ),
                 ],

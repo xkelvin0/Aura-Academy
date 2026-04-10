@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/welcome_screen.dart';
+import 'supabase_config.dart';
 
-void main() {
+// Función principal - inicializa Supabase antes de lanzar la app
+Future<void> main() async {
+  // Necesario para usar código asíncrono antes de runApp
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializamos la conexión con Supabase
+  await Supabase.initialize(
+    url: SupabaseConfig.supabaseUrl,
+    anonKey: SupabaseConfig.supabaseAnonKey,
+  );
+
   runApp(const AuraApp());
 }
 
