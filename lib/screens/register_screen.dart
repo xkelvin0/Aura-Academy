@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 // Pantalla de registro de nuevo usuario
 class RegisterScreen extends StatefulWidget {
@@ -425,8 +426,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Expanded(
                     child: _SocialButtonRegister(
                       label: 'Google',
-                      icon: const Icon(Icons.g_mobiledata_rounded,
-                          color: Color(0xFF4285F4), size: 28),
+                      icon: const FaIcon(FontAwesomeIcons.google,
+                          color: Color(0xFFDB4437), size: 20),
                       onTap: _registrarConGoogle, // OAuth con Supabase
                     ),
                   ),
@@ -435,8 +436,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Expanded(
                     child: _SocialButtonRegister(
                       label: 'GitHub',
-                      icon: const Icon(Icons.code_rounded,
-                          color: Color(0xFF1E293B), size: 22),
+                      icon: const FaIcon(FontAwesomeIcons.github,
+                          color: Color(0xFF1E293B), size: 24),
                       onTap: _registrarConGitHub, // OAuth con Supabase
                     ),
                   ),

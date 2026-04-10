@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'register_screen.dart'; // Importamos la pantalla de registro
 
 // Pantalla de inicio de sesión de Aura Academy
@@ -18,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Controla si la contraseña es visible o no
   bool _passwordVisible = false;
+  bool _isLoading = false; // Controla el estado de carga al iniciar sesión
 
   // Función para iniciar sesión con Google
   Future<void> _loginConGoogle() async {
@@ -33,6 +35,50 @@ class _LoginScreenState extends State<LoginScreen> {
       OAuthProvider.github,
       redirectTo: 'io.supabase.auraacademy://login-callback',
     );
+  }
+
+  // Función para iniciar sesión con email y contraseña
+  Future<void> _login() async {
+    if (_emailController.text.trim().isEmpty ||
+        _passwordController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor completa todos los campos')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Bienvenido de nuevo!'),
+            backgroundColor: Color(0xFF6366F1),
+          ),
+        );
+        // Aquí navegaremos al Dashboard en el futuro
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error inesperado al iniciar sesión')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -248,18 +294,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 28),
 
-                    // --- Botón "Iniciar Sesión" con gradiente ---
+                    // --- Botón "Iniciar Sesión" con gradiente y lógica real ---
                     Container(
                       width: double.infinity,
                       height: 56,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                        gradient: LinearGradient(
+                          colors: _isLoading
+                              ? [Colors.grey.shade400, Colors.grey.shade400]
+                              : [const Color(0xFF6366F1), const Color(0xFF8B5CF6)],
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
                         ),
                         borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
+                        boxShadow: _isLoading ? [] : [
                           BoxShadow(
                             color: const Color(0xFF6366F1).withOpacity(0.4),
                             blurRadius: 20,
@@ -271,22 +319,26 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Colors.transparent,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(16),
-                          onTap: () {},
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Iniciar Sesión',
-                                style: GoogleFonts.montserrat(
-                                  color: Colors.white,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.arrow_forward_rounded,
-                                  color: Colors.white),
-                            ],
+                          onTap: _isLoading ? null : _login,
+                          child: Center(
+                            child: _isLoading
+                                ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Iniciar Sesión',
+                                        style: GoogleFonts.montserrat(
+                                          color: Colors.white,
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Icon(Icons.arrow_forward_rounded,
+                                          color: Colors.white),
+                                    ],
+                                  ),
                           ),
                         ),
                       ),
@@ -335,8 +387,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             label: 'Google',
                             backgroundColor: const Color(0xFFF1F5F9),
                             textColor: const Color(0xFF1E293B),
-                            icon: const Icon(Icons.g_mobiledata_rounded,
-                                color: Color(0xFF4285F4), size: 28),
+                            icon: const FaIcon(FontAwesomeIcons.google,
+                                color: Color(0xFFDB4437), size: 20),
                             onTap: _loginConGoogle, // Conectado a Supabase OAuth
                           ),
                         ),
@@ -347,8 +399,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             label: 'GitHub',
                             backgroundColor: const Color(0xFF1E293B),
                             textColor: Colors.white,
-                            icon: const Icon(Icons.code_rounded,
-                                color: Colors.white, size: 22),
+                            icon: const FaIcon(FontAwesomeIcons.github,
+                                color: Colors.white, size: 24),
                             onTap: _loginConGitHub, // Conectado a Supabase OAuth
                           ),
                         ),
