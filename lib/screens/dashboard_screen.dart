@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/models.dart';
 import 'welcome_screen.dart';
+import 'profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -28,16 +29,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final user = supabase.auth.currentUser;
       if (user != null) {
-        final profile = await supabase
+        // Intentamos obtener el perfil
+        final profileResponse = await supabase
             .from('perfiles')
             .select('nombre_completo')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
         
         setState(() {
-          _userName = profile['nombre_completo'] ?? "Estudiante";
+          _userName = profileResponse?['nombre_completo'] ?? 
+                      user.userMetadata?['full_name'] ?? 
+                      "Estudiante";
           _isLoading = false;
         });
+
+        // Autocreación de perfil si no existe
+        if (profileResponse == null) {
+          await supabase.from('perfiles').insert({
+            'id': user.id,
+            'nombre_completo': _userName,
+            'email': user.email,
+          });
+        }
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
@@ -56,49 +69,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     }
 
+    // Lista de pantallas para la navegación
+    final List<Widget> _pages = [
+      _buildHomeContent(), // Pestaña 0: Inicio
+      const Center(child: Text("Pantalla de Búsqueda")), // Pestaña 1
+      const ProfileScreen(), // Pestaña 2: Mis Cursos
+      const ProfileScreen(), // Pestaña 3: Perfil
+    ];
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAFBFF),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 24),
-              _buildSearchBar(),
-              const SizedBox(height: 32),
-              _buildSectionTitle("Continuar Aprendiendo"),
-              const SizedBox(height: 16),
-              _buildContinueLearningCard(),
-              const SizedBox(height: 32),
-              _buildWeeklyGoalCard(),
-              const SizedBox(height: 32),
-              _buildSectionTitle("Principales Disciplinas"),
-              const SizedBox(height: 16),
-              _buildDisciplinesGrid(),
-              const SizedBox(height: 32),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildSectionTitle("Colecciones Destacadas"),
-                  TextButton(
-                    onPressed: () {},
-                    child: Text(
-                      "Ver Todas",
-                      style: TextStyle(color: const Color(0xFF6366F1), fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildFeaturedCollections(),
-              const SizedBox(height: 40),
-            ],
-          ),
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: _pages,
         ),
       ),
       bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  // Extraemos el contenido original del Home a un método para organizarlo
+  Widget _buildHomeContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 24),
+          _buildSearchBar(),
+          const SizedBox(height: 32),
+          _buildSectionTitle("Continuar Aprendiendo"),
+          const SizedBox(height: 16),
+          _buildContinueLearningCard(),
+          const SizedBox(height: 32),
+          _buildWeeklyGoalCard(),
+          const SizedBox(height: 32),
+          _buildSectionTitle("Principales Disciplinas"),
+          const SizedBox(height: 16),
+          _buildDisciplinesGrid(),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(child: _buildSectionTitle("Colecciones Destacadas")),
+              TextButton(
+                onPressed: () {},
+                child: const Text(
+                  "Ver Todas",
+                  style: TextStyle(color: Color(0xFF6366F1), fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildFeaturedCollections(),
+          const SizedBox(height: 40),
+        ],
+      ),
     );
   }
 
@@ -120,9 +149,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        CircleAvatar(
-          radius: 20,
-          backgroundImage: NetworkImage('https://ui-avatars.com/api/?name=$_userName&background=6366F1&color=fff'),
+        GestureDetector(
+          onTap: () => setState(() => _selectedIndex = 3),
+          child: CircleAvatar(
+            radius: 20,
+            backgroundImage: NetworkImage('https://ui-avatars.com/api/?name=$_userName&background=6366F1&color=fff'),
+          ),
         ),
       ],
     );
