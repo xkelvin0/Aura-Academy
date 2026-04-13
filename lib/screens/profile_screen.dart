@@ -105,7 +105,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // Algoritmo para extraer iniciales: Primer Nombre + Apellido Paterno (3ra palabra si existe)
+  String _getInitials(String name) {
+    if (name.isEmpty) return "U";
+    List<String> parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty) return "U";
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    if (parts.length >= 3) return "${parts[0][0]}${parts[2][0]}".toUpperCase();
+    return "${parts[0][0]}${parts[1][0]}".toUpperCase();
+  }
+
   Widget _buildHeader() {
+    final nombre = _profileData?['nombre_completo'] ?? "Usuario Aura (Cargando...)";
+    final avatarUrl = _profileData?['avatar_url'];
+    final iniciales = _getInitials(nombre);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -113,7 +127,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             CircleAvatar(
               radius: 50,
-              backgroundImage: NetworkImage(_profileData?['avatar_url'] ?? 'https://ui-avatars.com/api/?name=User&background=6366F1&color=fff'),
+              backgroundColor: const Color(0xFFE8E7FF),
+              backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+              child: avatarUrl == null 
+                  ? Text(
+                      iniciales, 
+                      style: GoogleFonts.montserrat(
+                        fontSize: 36, 
+                        fontWeight: FontWeight.bold, 
+                        color: const Color(0xFF6366F1)
+                      )
+                    ) 
+                  : null,
             ),
             Positioned(
               bottom: 0,
@@ -198,13 +223,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _upgradeToInstructor() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: const [
+            Icon(Icons.campaign_rounded, color: Color(0xFFD97706)),
+            SizedBox(width: 8),
+            Text("¿Ser Instructor?"),
+          ],
+        ),
+        content: const Text(
+          "Al convertirte en instructor, podrás crear cursos de alto nivel y gestionar alumnos internacionales.\n\n¿Estás listo para compartir tu conocimiento?",
+          style: TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Quizás Luego", style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD97706),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text("Sí, ¡Empecemos!"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final user = supabase.auth.currentUser;
+      if (user != null) {
+        setState(() => _isLoading = true);
+        try {
+          await supabase.from('perfiles').update({'es_instructor': true}).eq('id', user.id);
+          await _loadProfile(); // Recarga toda la pantalla y esconde el botón
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('¡Felicidades! Tu cuenta ahora es nivel Instructor 🎓'),
+                backgroundColor: Color(0xFF0D9488),
+              ),
+            );
+          }
+        } catch (e) {
+          debugPrint("Error actualizando a instructor: $e");
+          if (mounted) {
+            setState(() => _isLoading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Hubo un error al actualizar el perfil en la base de datos.'), backgroundColor: Colors.red),
+            );
+          }
+        }
+      }
+    }
+  }
+
   Widget _buildAccessMenu() {
+    final bool esInstructor = _profileData?['es_instructor'] == true;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text("Biblioteca y Acceso", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         const SizedBox(height: 16),
-        if (_profileData?['es_instructor'] == true)
+        
+        if (esInstructor) ...[
           _buildMenuItem(
             label: "Panel de Instructor", 
             icon: Icons.school_rounded, 
@@ -212,7 +302,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             textColor: const Color(0xFF6366F1),
             isPrimary: false,
           ),
-        const SizedBox(height: 8),
+          const SizedBox(height: 8),
+        ] else ...[
+          _buildMenuItem(
+            label: "Conviértete en Instructor", 
+            icon: Icons.campaign_rounded, 
+            color: const Color(0xFFFEF3C7), // Dorado suave
+            textColor: const Color(0xFFD97706), // Ámbar fuerte
+            isPrimary: false,
+            onTap: _upgradeToInstructor,
+          ),
+          const SizedBox(height: 8),
+        ],
+
         _buildMenuItem(
           label: "Mis Cursos", 
           icon: Icons.play_circle_fill_rounded, 
@@ -227,34 +329,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildMenuItem({required String label, required IconData icon, required Color color, required Color textColor, required bool isPrimary}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: textColor),
-          const SizedBox(width: 16),
-          Expanded(child: Text(label, style: TextStyle(color: textColor, fontWeight: FontWeight.bold))),
-          Icon(Icons.chevron_right_rounded, color: textColor),
-        ],
+  Widget _buildMenuItem({
+    required String label, 
+    required IconData icon, 
+    required Color color, 
+    required Color textColor, 
+    required bool isPrimary,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap ?? () {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('¡Excelente elección! La función "$label" está en construcción. 🚀'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: textColor),
+            const SizedBox(width: 16),
+            Expanded(child: Text(label, style: TextStyle(color: textColor, fontWeight: FontWeight.bold))),
+            Icon(Icons.chevron_right_rounded, color: textColor),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildListTile(IconData icon, String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFF64748B), size: 22),
-          const SizedBox(width: 16),
-          Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500))),
-          const Icon(Icons.chevron_right_rounded, color: Color(0xFFCBD5E1)),
-        ],
+    return InkWell(
+      onTap: () {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Configuración "$label" en desarrollo. 🛠️'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xFF64748B), size: 22),
+            const SizedBox(width: 16),
+            Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500))),
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFFCBD5E1)),
+          ],
+        ),
       ),
     );
   }

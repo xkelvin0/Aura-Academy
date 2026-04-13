@@ -140,6 +140,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // Algoritmo para extraer iniciales: Primer Nombre + Apellido Paterno (3ra palabra si existe)
+  String _getInitials(String name) {
+    if (name.isEmpty) return "U";
+    List<String> parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty) return "U";
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    if (parts.length >= 3) return "${parts[0][0]}${parts[2][0]}".toUpperCase();
+    return "${parts[0][0]}${parts[1][0]}".toUpperCase();
+  }
+
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -162,7 +172,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           onTap: () => setState(() => _selectedIndex = 3),
           child: CircleAvatar(
             radius: 20,
-            backgroundImage: NetworkImage('https://ui-avatars.com/api/?name=$_userName&background=6366F1&color=fff'),
+            backgroundColor: const Color(0xFF6366F1),
+            child: Text(
+              _getInitials(_userName),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+            ),
           ),
         ),
       ],
