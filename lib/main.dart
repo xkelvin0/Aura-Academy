@@ -34,25 +34,31 @@ class AuraApp extends StatelessWidget {
           brightness: Brightness.light,
         ),
       ),
-      // --- El Router Automático ---
-      // Escucha los cambios en la sesión (Login, Logout, OAuth Callback)
       home: StreamBuilder<AuthState>(
         stream: Supabase.instance.client.auth.onAuthStateChange,
         builder: (context, snapshot) {
-          // Si todavía se está conectando, podemos mostrar un splash rápido
+          // Registro de depuración para ver qué pasa en tiempo real
+          if (snapshot.hasData) {
+            final event = snapshot.data!.event;
+            final session = snapshot.data!.session;
+            debugPrint("AUTH_EVENT: $event | SESSION_ACTIVE: ${session != null}");
+          }
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
               body: Center(child: CircularProgressIndicator()),
             );
           }
 
-          // Verificamos si hay una sesión activa
           final session = snapshot.hasData ? snapshot.data!.session : null;
 
           if (session != null) {
-            return const DashboardScreen(); // Usuario logueado -> Dashboard
+            // Si hay sesión, vamos al Dashboard de cabeza
+            return const DashboardScreen();
           } else {
-            return const WelcomeScreen(); // No logueado -> Bienvenida
+            // Si no hay sesión, mostramos la bienvenida
+            // Usamos un Key único para asegurar que la pantalla se limpie correctamente
+            return const WelcomeScreen(key: ValueKey('welcome_screen'));
           }
         },
       ),

@@ -78,11 +78,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       // Paso 2: Si el usuario se creó, guardamos su perfil en la tabla "perfiles"
       if (response.user != null) {
-        await Supabase.instance.client.from('perfiles').insert({
-          'id': response.user!.id,
-          'nombre_completo': _nameController.text.trim(),
-          'email': _emailController.text.trim(),
-        });
+        try {
+          await Supabase.instance.client.from('perfiles').insert({
+            'id': response.user!.id,
+            'nombre_completo': _nameController.text.trim(),
+            'email': _emailController.text.trim(),
+          });
+        } catch (dbError) {
+          // El error 42501 es RLS. Si falla la inserción pero el auth funcionó, avanzamos.
+          debugPrint("Advertencia DB (RLS o Trigger): $dbError");
+        }
 
         if (mounted) {
           // Mostramos mensaje de éxito y regresamos al Login
@@ -108,10 +113,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       }
     } catch (e) {
-      // Errores generales de conexión
+      // Diferenciar errores de base de datos u otras fallas
+      debugPrint("Error crítico en el registro: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al registrarse. Intenta de nuevo.')),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.redAccent,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     } finally {

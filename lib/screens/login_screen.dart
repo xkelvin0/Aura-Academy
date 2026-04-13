@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -21,20 +22,36 @@ class _LoginScreenState extends State<LoginScreen> {
   // Controla si la contraseña es visible o no
   bool _passwordVisible = false;
   bool _isLoading = false; // Controla el estado de carga al iniciar sesión
+  late final StreamSubscription<AuthState> _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    // Suscripción al estado de autenticación. Si el usuario se loguea (ej. vuelve de Google vía deep link), 
+    // la pantalla de login "escucha" ese cambio y navega al Dashboard, destruyendo la pila actual.
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      final session = data.session;
+      if (session != null && mounted) {
+        // Redirigir al dashboard si se detecta sesión iniciada.
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          (Route<dynamic> route) => false,
+        );
+      }
+    });
+  }
 
   // Función para iniciar sesión con Google
   Future<void> _loginConGoogle() async {
-    await Supabase.instance.client.auth.signInWithOAuth(
-      OAuthProvider.google,
-      redirectTo: 'io.supabase.auraacademy://login-callback',
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Inicio con Google deshabilitado temporalmente por mantenimiento.')),
     );
   }
 
   // Función para iniciar sesión con GitHub
   Future<void> _loginConGitHub() async {
-    await Supabase.instance.client.auth.signInWithOAuth(
-      OAuthProvider.github,
-      redirectTo: 'io.supabase.auraacademy://login-callback',
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Inicio con GitHub deshabilitado temporalmente por mantenimiento.')),
     );
   }
 
@@ -85,6 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     // Liberamos los controladores al cerrar la pantalla
+    _authSubscription.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -347,66 +365,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 28),
 
-                    // --- Divisor "O CONTINÚA CON" ---
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Divider(
-                            color: Colors.grey[200],
-                            thickness: 1.5,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            'O CONTINÚA CON',
-                            style: GoogleFonts.montserrat(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFFCBD5E1),
-                              letterSpacing: 1,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Divider(
-                            color: Colors.grey[200],
-                            thickness: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
+                    // LOS BOTONES SOCIALES HAN SIDO OCULTADOS TEMPORALMENTE (Líneas eliminadas para limpiar UI)
 
-                    const SizedBox(height: 24),
-
-                    // --- Botones de Google y GitHub ---
-                    Row(
-                      children: [
-                        // Botón Google
-                        Expanded(
-                          child: _SocialButton(
-                            label: 'Google',
-                            backgroundColor: const Color(0xFFF1F5F9),
-                            textColor: const Color(0xFF1E293B),
-                            icon: const FaIcon(FontAwesomeIcons.google,
-                                color: Color(0xFFDB4437), size: 20),
-                            onTap: _loginConGoogle, // Conectado a Supabase OAuth
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Botón GitHub (reemplaza Apple)
-                        Expanded(
-                          child: _SocialButton(
-                            label: 'GitHub',
-                            backgroundColor: const Color(0xFF1E293B),
-                            textColor: Colors.white,
-                            icon: const FaIcon(FontAwesomeIcons.github,
-                                color: Colors.white, size: 24),
-                            onTap: _loginConGitHub, // Conectado a Supabase OAuth
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),

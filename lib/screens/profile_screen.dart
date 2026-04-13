@@ -14,6 +14,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final supabase = Supabase.instance.client;
   bool _isLoading = true;
   Map<String, dynamic>? _profileData;
+  List<Map<String, dynamic>> _inProgressCourses = [];
 
   @override
   void initState() {
@@ -25,17 +26,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final user = supabase.auth.currentUser;
       if (user != null) {
-        final profile = await supabase
-            .from('perfiles')
-            .select()
-            .eq('id', user.id)
-            .single();
+        // Extraemos metadatos de Google
+        final meta = user.userMetadata;
+        final googleName = meta?['full_name'] ?? meta?['name'] ?? 'Usuario Nómada';
+        final googleAvatar = meta?['avatar_url'] ?? meta?['picture'];
+
+        Map<String, dynamic>? profile;
+        try {
+          // 1. Intentar cargar datos de la tabla perfiles
+          profile = await supabase
+              .from('perfiles')
+              .select()
+              .eq('id', user.id)
+              .single();
+        } catch (e) {
+          debugPrint("No hay registro en BD. Usando metadata de Google.");
+          // Perfil temporal usando la información de Google
+          profile = {
+            'nombre_completo': googleName,
+            'biografia': 'Recién llegado a Aura Academy. ¡A punto de brillar!',
+            'avatar_url': googleAvatar,
+            'cursos_completados': 0,
+            'certificados_count': 0,
+            'horas_estudio_total': 0,
+            'racha_dias': 0,
+            'es_instructor': false,
+          };
+        }
+
+        // 2. Cargar cursos en progreso REALES
+        List<Map<String, dynamic>> finalEnrollments = [];
+        try {
+          final enrollments = await supabase
+              .from('inscripciones')
+              .select('*, cursos(*, categorias(nombre))')
+              .eq('perfil_id', user.id)
+              .eq('en_progreso', true);
+          finalEnrollments = List<Map<String, dynamic>>.from(enrollments);
+        } catch (e) {
+          debugPrint("Error consultando inscripciones: $e");
+        }
+
         setState(() {
           _profileData = profile;
+          _inProgressCourses = finalEnrollments;
           _isLoading = false;
         });
       }
     } catch (e) {
+      debugPrint("Error crítico cargando perfil: $e");
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -92,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          _profileData?['nombre_completo'] ?? "Alex Rivera",
+          _profileData?['nombre_completo'] ?? "Usuario Aura (Cargando...)",
           style: GoogleFonts.montserrat(
             fontSize: 28,
             fontWeight: FontWeight.bold,
@@ -101,7 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          _profileData?['biografia'] ?? "Diseñadora de Interacción Senior...",
+          _profileData?['biografia'] ?? "Todavía no tienes una biografía configurada.",
           style: GoogleFonts.montserrat(
             fontSize: 14,
             color: const Color(0xFF64748B),
@@ -267,27 +306,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text("En Progreso", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
-            TextButton(onPressed: () {}, child: const Text("Ver Todo", style: TextStyle(color: Color(0xFF6366F1)))),
+            TextButton(
+              onPressed: () {}, 
+              child: const Text("Ver Todo", style: TextStyle(color: Color(0xFF6366F1)))
+            ),
           ],
         ),
         const SizedBox(height: 16),
-        _buildCourseProgressItem(
-          "Arquitecturas Neuronales Avanzadas", 
-          "ARQUITECTURA", 
-          0.75, 
-          "75%", 
-          "Capas Transformer",
-          'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=400'
-        ),
-        const SizedBox(height: 16),
-        _buildCourseProgressItem(
-          "Psicología del Movimiento de Interfaz", 
-          "DISEÑO UI", 
-          0.32, 
-          "32%", 
-          "Feedback Kinético",
-          'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&q=80&w=400'
-        ),
+        if (_inProgressCourses.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Text("Cero cursos en progreso. ¡Empieza a aprender hoy!", style: TextStyle(color: Colors.grey)),
+          )
+        else
+          ..._inProgressCourses.map((enroll) {
+            final curso = enroll['cursos'];
+            final categoria = curso['categorias']?['nombre'] ?? "GENERAL";
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildCourseProgressItem(
+                curso['titulo'] ?? "Sin título",
+                categoria.toString().toUpperCase(),
+                (enroll['progreso_porcentaje'] ?? 0) / 100,
+                "${enroll['progreso_porcentaje'] ?? 0}%",
+                "Siguiente lección...", // Aquí podrías jalar el nombre de la lección si quisieras
+                curso['thumbnail_url'] ?? "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=400",
+              ),
+            );
+          }),
       ],
     );
   }

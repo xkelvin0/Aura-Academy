@@ -36,23 +36,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .eq('id', user.id)
             .maybeSingle();
         
-        setState(() {
-          _userName = profileResponse?['nombre_completo'] ?? 
-                      user.userMetadata?['full_name'] ?? 
-                      "Estudiante";
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _userName = profileResponse?['nombre_completo'] ?? 
+                        user.userMetadata?['full_name'] ?? 
+                        "Estudiante";
+            _isLoading = false;
+          });
+        }
 
         // Autocreación de perfil si no existe
         if (profileResponse == null) {
-          await supabase.from('perfiles').insert({
-            'id': user.id,
-            'nombre_completo': _userName,
-            'email': user.email,
-          });
+          try {
+            await supabase.from('perfiles').insert({
+              'id': user.id,
+              'nombre_completo': _userName,
+              'email': user.email,
+            });
+          } catch (dbError) {
+            debugPrint("Advertencia Dashboard (Auto-Creación): $dbError");
+          }
         }
+      } else {
+        if (mounted) setState(() => _isLoading = false);
       }
     } catch (e) {
+      debugPrint("Error crítico cargando Dashboard: $e");
       if (mounted) setState(() => _isLoading = false);
     }
   }
