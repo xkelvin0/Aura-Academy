@@ -2,6 +2,19 @@
 -- Copia y pega esto en el SQL Editor de Supabase y aprieta "RUN"
 
 -- ==========================================
+-- 0. LIMPIEZA DE COLISIONES (Drop Seguro)
+-- ==========================================
+-- Como ya ejecutaste la versión 1.0, Supabase ignoraría la creación si detecta tablas con el mismo nombre.
+-- Estas líneas eliminan las definiciones antiguas (y sus datos dummy) sin tocar tus Usuarios/Auth.
+DROP TABLE IF EXISTS metas_semanales CASCADE;
+DROP TABLE IF EXISTS inscripciones CASCADE;
+DROP TABLE IF EXISTS lecciones CASCADE;
+DROP TABLE IF EXISTS cursos CASCADE;
+DROP TABLE IF EXISTS categorias CASCADE;
+DROP TABLE IF EXISTS instructores CASCADE; -- ¡Esta es la que ya no usaremos!
+
+
+-- ==========================================
 -- 1. CATEGORÍAS
 -- ==========================================
 CREATE TABLE IF NOT EXISTS categorias (
