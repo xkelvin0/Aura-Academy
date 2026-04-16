@@ -44,8 +44,8 @@ class _SearchScreenState extends State<SearchScreen> {
     try {
       final res = await supabase
           .from('cursos')
-          .select('*, perfiles(nombre_completo)')
-          .order('created_at', ascending: false);
+          .select('*, perfiles(nombre_completo)') 
+          .order('fecha_creacion', ascending: false);
       
       if (mounted) {
         setState(() {
@@ -55,13 +55,24 @@ class _SearchScreenState extends State<SearchScreen> {
         });
       }
     } catch (e) {
-      debugPrint("Error cargando catálogo: $e");
-      if (mounted) setState(() => _isLoading = false);
+      debugPrint("DEBUG: Error cargando catálogo con join: $e");
+      // Fallback: intentar cargar sin nombres si el join falla
+      try {
+        final res = await supabase.from('cursos').select('*').order('fecha_creacion', ascending: false);
+        if (mounted) {
+          setState(() {
+            _allCourses = List<Map<String, dynamic>>.from(res);
+            _filteredCourses = _allCourses;
+            _isLoading = false;
+          });
+        }
+      } catch (e2) {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
   void _onSearchChanged(String query) {
-    // Forzamos actualización inmediata para mostrar/ocultar categorías o el botón "X"
     setState(() {}); 
 
     if (_debounce?.isActive ?? false) _debounce!.cancel();
@@ -91,7 +102,7 @@ class _SearchScreenState extends State<SearchScreen> {
         });
       }
     } catch (e) {
-      debugPrint("Error buscando: $e");
+      debugPrint("DEBUG: Error buscando con join: $e");
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -105,9 +116,13 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             _buildSearchHeader(),
             Expanded(
-              child: _isLoading 
-                ? const Center(child: CircularProgressIndicator())
-                : _buildContent(),
+              child: RefreshIndicator(
+                onRefresh: _loadAllCourses,
+                color: const Color(0xFF6366F1),
+                child: _isLoading 
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildContent(),
+              ),
             ),
           ],
         ),
@@ -295,8 +310,6 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildWideCourseCard(Map<String, dynamic> c) {
-    final profesorNombre = c['perfiles']?['nombre_completo'] ?? "Instructor";
-    
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -356,7 +369,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Text(profesorNombre, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                    const Text("Instructor", style: TextStyle(fontSize: 11, color: Colors.grey)),
                     const SizedBox(height: 8),
                     Row(
                       children: [
