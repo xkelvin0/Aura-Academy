@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/category_selection_screen.dart';
 import 'supabase_config.dart';
 
 // Función principal - inicializa Supabase antes de lanzar la app
@@ -37,13 +38,6 @@ class AuraApp extends StatelessWidget {
       home: StreamBuilder<AuthState>(
         stream: Supabase.instance.client.auth.onAuthStateChange,
         builder: (context, snapshot) {
-          // Registro de depuración para ver qué pasa en tiempo real
-          if (snapshot.hasData) {
-            final event = snapshot.data!.event;
-            final session = snapshot.data!.session;
-            debugPrint("AUTH_EVENT: $event | SESSION_ACTIVE: ${session != null}");
-          }
-
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
               body: Center(child: CircularProgressIndicator()),
@@ -53,11 +47,8 @@ class AuraApp extends StatelessWidget {
           final session = snapshot.hasData ? snapshot.data!.session : null;
 
           if (session != null) {
-            // Si hay sesión, vamos al Dashboard de cabeza
             return const DashboardScreen();
           } else {
-            // Si no hay sesión, mostramos la bienvenida
-            // Usamos un Key único para asegurar que la pantalla se limpie correctamente
             return const WelcomeScreen(key: ValueKey('welcome_screen'));
           }
         },

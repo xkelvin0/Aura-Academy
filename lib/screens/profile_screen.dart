@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'package:aura_academy/screens/instructor_panel_screen.dart';
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -15,6 +15,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _profileData;
   List<Map<String, dynamic>> _inProgressCourses = [];
+  
+  // Estadísticas reales
+  int _completedCoursesCount = 0;
+  int _certificatesCount = 0;
+  double _totalStudyHours = 0.0;
 
   @override
   void initState() {
@@ -67,9 +72,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
           debugPrint("Error consultando inscripciones: $e");
         }
 
+        // 3. Consultas Analíticas Reales
+        int completedCount = 0;
+        int certsCount = 0;
+        double studyHours = 0.0;
+
+        try {
+          // Contar cursos completados (100%)
+          final completedRes = await supabase
+              .from('inscripciones')
+              .select('id')
+              .eq('perfil_id', user.id)
+              .eq('progreso_porcentaje', 100)
+              .count(CountOption.exact);
+          completedCount = completedRes.count ?? 0;
+
+          // Contar certificados
+          final certsRes = await supabase
+              .from('certificados')
+              .select('id')
+              .eq('perfil_id', user.id)
+              .count(CountOption.exact);
+          certsCount = certsRes.count ?? 0;
+
+          // Sumar horas totales de estudio
+          final hoursRes = await supabase
+              .from('metas_semanales')
+              .select('horas_estudiadas')
+              .eq('perfil_id', user.id);
+          
+          if (hoursRes != null) {
+            for (var row in (hoursRes as List)) {
+              studyHours += (row['horas_estudiadas'] ?? 0.0).toDouble();
+            }
+          }
+        } catch (e) {
+          debugPrint("Error cargando estadísticas analíticas: $e");
+        }
+
         setState(() {
           _profileData = profile;
           _inProgressCourses = finalEnrollments;
+          _completedCoursesCount = completedCount;
+          _certificatesCount = certsCount;
+          _totalStudyHours = studyHours;
           _isLoading = false;
         });
       }
@@ -180,11 +226,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: _buildStatItem(_profileData?['cursos_completados']?.toString() ?? "12", "CURSOS COMPLETADOS")),
+        Expanded(child: _buildStatItem(_completedCoursesCount.toString(), "CURSOS COMPLETADOS")),
         const SizedBox(width: 12),
-        Expanded(child: _buildStatItem("0${_profileData?['certificados_count'] ?? "8"}", "CERTIFICADOS")),
+        Expanded(child: _buildStatItem(_certificatesCount < 10 ? "0$_certificatesCount" : _certificatesCount.toString(), "CERTIFICADOS")),
         const SizedBox(width: 12),
-        Expanded(child: _buildStatItem(_profileData?['horas_estudio_total'] ?? "1.2k", "HORAS DE ESTUDIO")),
+        Expanded(child: _buildStatItem("${_totalStudyHours.toStringAsFixed(1)}h", "HORAS DE ESTUDIO")),
       ],
     );
   }
@@ -301,6 +347,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: const Color(0xFFE8E7FF), 
             textColor: const Color(0xFF6366F1),
             isPrimary: false,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const InstructorPanelScreen()),
+              );
+            },
           ),
           const SizedBox(height: 8),
         ] else ...[
@@ -395,6 +447,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildDailyImpulse() {
+    final int racha = _profileData?['racha_dias'] ?? 0;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -409,13 +463,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const Text("Impulso Diario", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 4),
           Text(
-            "Has estudiado durante ${_profileData?['racha_dias'] ?? 5} días consecutivos. ¡Mantén la racha!",
+            racha == 0 
+              ? "Aún no has iniciado tu racha. ¡Estudia hoy mismo para empezar!"
+              : "Has estudiado durante $racha ${racha == 1 ? 'día' : 'días'} consecutivos. ¡Mantén la racha!",
             style: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
           ),
           const SizedBox(height: 20),
           Row(
             children: List.generate(7, (index) {
-              bool isActive = index < (_profileData?['racha_dias'] ?? 5);
+              // Por ahora, como es visual, marcamos el primer día si la racha es >= 1
+              bool isActive = index < racha;
               return Expanded(
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 4),

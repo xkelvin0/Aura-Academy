@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dashboard_screen.dart'; // Importamos el dashboard
+import 'category_selection_screen.dart'; // Importamos la nueva pantalla
 
 // Pantalla de registro de nuevo usuario
 class RegisterScreen extends StatefulWidget {
@@ -74,6 +75,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final response = await Supabase.instance.client.auth.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
+        data: {
+          'full_name': _nameController.text.trim(),
+        },
       );
 
       // Paso 2: Si el usuario se creó, guardamos su perfil en la tabla "perfiles"
@@ -100,7 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // Navegamos al Dashboard (Fase 6)
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+            MaterialPageRoute(builder: (context) => const CategorySelectionScreen()),
             (route) => false,
           );
         }

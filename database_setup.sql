@@ -4,15 +4,18 @@
 -- ==========================================
 -- 0. LIMPIEZA DE COLISIONES (Drop Seguro)
 -- ==========================================
--- Como ya ejecutaste la versión 1.0, Supabase ignoraría la creación si detecta tablas con el mismo nombre.
 -- Estas líneas eliminan las definiciones antiguas (y sus datos dummy) sin tocar tus Usuarios/Auth.
 DROP TABLE IF EXISTS metas_semanales CASCADE;
 DROP TABLE IF EXISTS inscripciones CASCADE;
 DROP TABLE IF EXISTS lecciones CASCADE;
+DROP TABLE IF EXISTS recursos_leccion CASCADE;
+DROP TABLE IF EXISTS resenas CASCADE;
+DROP TABLE IF EXISTS lista_deseos CASCADE;
+DROP TABLE IF EXISTS certificados CASCADE;
+DROP TABLE IF EXISTS transacciones CASCADE;
 DROP TABLE IF EXISTS cursos CASCADE;
 DROP TABLE IF EXISTS categorias CASCADE;
 DROP TABLE IF EXISTS instructores CASCADE; -- ¡Esta es la que ya no usaremos!
-
 
 -- ==========================================
 -- 1. CATEGORÍAS
@@ -23,9 +26,6 @@ CREATE TABLE IF NOT EXISTS categorias (
   icono_nombre text, 
   color_hex text 
 );
-
--- Nota: Ya no existe la tabla "instructores". Un instructor es un usuario
--- directo de la tabla "perfiles" que tiene el booleano es_instructor = true.
 
 -- ==========================================
 -- 2. CURSOS
