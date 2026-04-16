@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'profile_screen.dart';
 import 'category_selection_screen.dart';
 import 'course_detail_screen.dart';
+import 'search_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -158,7 +159,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final List<Widget> pages = [
       _buildHomeContent(), 
-      const Center(child: Text("Búsqueda y Catálogo")), 
+      const SearchScreen(), 
       const Center(child: Text("Mis Aprendizajes")), 
       const ProfileScreen(), 
     ];
