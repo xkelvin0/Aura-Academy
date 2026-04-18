@@ -27,17 +27,35 @@ class _SearchScreenState extends State<SearchScreen> {
     {'id': 'biz_id', 'nombre': 'Negocios', 'icon': FontAwesomeIcons.briefcase, 'color': const Color(0xFFF59E0B)},
   ];
 
+  List<Map<String, dynamic>> _dbCategories = [];
+  String? _selectedCategoryId;
+
   @override
   void initState() {
     super.initState();
-    _loadAllCourses();
+    _loadInitialData();
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _debounce?.cancel();
-    super.dispose();
+  Future<void> _loadInitialData() async {
+    await Future.wait([
+      _loadCategories(),
+      _loadAllCourses(),
+    ]);
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      debugPrint("DEBUG: Intentando cargar categorías de Supabase...");
+      final res = await supabase.from('categorias').select('*');
+      debugPrint("DEBUG: -> Categorías recibidas: ${res.length}");
+      if (mounted) {
+        setState(() {
+          _dbCategories = List<Map<String, dynamic>>.from(res);
+        });
+      }
+    } catch (e) {
+      debugPrint("DEBUG: !!! Error cargando categorías: $e");
+    }
   }
 
   Future<void> _loadAllCourses() async {
@@ -56,7 +74,6 @@ class _SearchScreenState extends State<SearchScreen> {
       }
     } catch (e) {
       debugPrint("DEBUG: Error cargando catálogo con join: $e");
-      // Fallback: intentar cargar sin nombres si el join falla
       try {
         final res = await supabase.from('cursos').select('*').order('fecha_creacion', ascending: false);
         if (mounted) {
@@ -73,7 +90,9 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _onSearchChanged(String query) {
-    setState(() {}); 
+    setState(() {
+      if (query.isNotEmpty) _selectedCategoryId = null; // Limpiar categoría si se escribe
+    }); 
 
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
@@ -82,7 +101,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _performSearch(String query) async {
-    if (query.isEmpty) {
+    if (query.isEmpty && _selectedCategoryId == null) {
       setState(() => _filteredCourses = _allCourses);
       return;
     }
@@ -90,10 +109,23 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final res = await supabase
-          .from('cursos')
-          .select('*, perfiles(nombre_completo)')
-          .ilike('titulo', '%$query%');
+      debugPrint("DEBUG: [_performSearch] query='$query', catId='$_selectedCategoryId'");
+      var request = supabase.from('cursos').select('*, perfiles(nombre_completo)');
+
+      if (_selectedCategoryId != null) {
+        request = request.eq('categoria_id', _selectedCategoryId!);
+      }
+      
+      // Solo buscamos por texto si el texto no es exactamente el nombre de la categoría seleccionada
+      // o si no hay categoría seleccionada.
+      bool isCategoryNameSearch = _dbCategories.any((c) => c['nombre'].toString().toLowerCase() == query.toLowerCase());
+
+      if (query.isNotEmpty && !isCategoryNameSearch) {
+        request = request.or('titulo.ilike.%$query%,subtitulo.ilike.%$query%,descripcion.ilike.%$query%');
+      }
+
+      final res = await request.order('fecha_creacion', ascending: false);
+      debugPrint("DEBUG: [_performSearch] Cursos encontrados: ${res.length}");
 
       if (mounted) {
         setState(() {
@@ -102,7 +134,7 @@ class _SearchScreenState extends State<SearchScreen> {
         });
       }
     } catch (e) {
-      debugPrint("DEBUG: Error buscando con join: $e");
+      debugPrint("DEBUG: !!! Error buscando: $e");
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -248,7 +280,17 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
   Widget _buildCategoryGrid() {
+    // Usamos las categorías de la DB si están cargadas, sino las estáticas
+    final displayCategories = _dbCategories.isNotEmpty ? _dbCategories : _categories;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -266,9 +308,15 @@ class _SearchScreenState extends State<SearchScreen> {
             mainAxisSpacing: 12,
             childAspectRatio: 2.2,
           ),
-          itemCount: _categories.length,
+          itemCount: _categories.length, // Mantenemos 4 para el diseño premium
           itemBuilder: (context, index) {
             final cat = _categories[index];
+            // Buscamos el ID real en la DB por nombre
+            final dbCat = _dbCategories.firstWhere(
+              (c) => c['nombre'].toString().toLowerCase() == cat['nombre'].toString().toLowerCase(),
+              orElse: () => {},
+            );
+
             return Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -277,7 +325,10 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
               child: InkWell(
                 onTap: () {
-                  _searchController.text = cat['nombre'];
+                  setState(() {
+                    _searchController.text = cat['nombre'];
+                    _selectedCategoryId = dbCat['id'];
+                  });
                   _performSearch(cat['nombre']);
                 },
                 borderRadius: BorderRadius.circular(16),
@@ -369,7 +420,12 @@ class _SearchScreenState extends State<SearchScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    const Text("Instructor", style: TextStyle(fontSize: 11, color: Colors.grey)),
+                    Text(
+                      c['perfiles']?['nombre_completo'] ?? "Instructor", 
+                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [

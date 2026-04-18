@@ -68,6 +68,57 @@ class _InstructorPanelScreenState extends State<InstructorPanelScreen> {
     }
   }
 
+  void _showDeleteConfirmation(String courseId, String title) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text("¿Eliminar curso?", style: GoogleFonts.montserrat(fontWeight: FontWeight.bold)),
+        content: Text("¿Estás seguro de que quieres eliminar '$title'? Esta acción borrará todas las lecciones y no se puede deshacer.", 
+          style: GoogleFonts.montserrat(fontSize: 14)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancelar", style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteCourse(courseId);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text("Eliminar", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteCourse(String courseId) async {
+    setState(() => _isLoading = true);
+    try {
+      await supabase.from('cursos').delete().eq('id', courseId);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Curso eliminado correctamente 🗑️")),
+        );
+      }
+      _loadData(); // Recargar lista
+    } catch (e) {
+      debugPrint("Error al eliminar curso: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error al eliminar el curso")),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -331,6 +382,10 @@ class _InstructorPanelScreenState extends State<InstructorPanelScreen> {
                           height: 1.3,
                         ),
                       ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444), size: 20),
+                      onPressed: () => _showDeleteConfirmation(courseId, title),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
