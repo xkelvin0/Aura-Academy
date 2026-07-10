@@ -367,11 +367,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 context: context,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
-                builder: (_) => DraggableScrollableSheet(
-                  initialChildSize: 0.82,
-                  minChildSize: 0.5,
-                  maxChildSize: 0.95,
-                  builder: (_, scrollController) => const AuraChatWidget(),
+                useSafeArea: false,
+                builder: (ctx) => AnimatedPadding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(ctx).viewInsets.bottom,
+                  ),
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.easeOut,
+                  child: SizedBox(
+                    height: MediaQuery.of(ctx).size.height * 0.80,
+                    child: const AuraChatWidget(),
+                  ),
                 ),
               );
             },

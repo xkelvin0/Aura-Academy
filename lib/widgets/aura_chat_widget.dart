@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:aura_academy/services/groq_service.dart';
 
@@ -131,10 +131,13 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      child: Column(
-        children: [
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Container(
+        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+        child: Column(
+          children: [
           Center(
             child: Container(
               margin: const EdgeInsets.only(top: 12, bottom: 4),
@@ -195,9 +198,7 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
           Container(
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
             decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: Color(0xFFE2E8F0)))),
-            child: SafeArea(
-              top: false,
-              child: Row(
+            child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
@@ -245,7 +246,8 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }
 
