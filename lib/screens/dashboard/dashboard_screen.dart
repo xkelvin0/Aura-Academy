@@ -17,6 +17,7 @@ import 'package:aura_academy/screens/instructor/course_structure_screen.dart';
 import 'package:aura_academy/screens/courses/lesson_player_screen.dart';
 import 'package:aura_academy/screens/dashboard/wishlist_screen.dart';
 import 'package:aura_academy/screens/instructor/instructor_panel_screen.dart'; // <--- Importación nueva
+import 'package:aura_academy/widgets/aura_chat_widget.dart';
 
 class DashboardScreen extends StatefulWidget {
   // Canal global para notificar cambios en los cursos (likes, vistas, etc)
@@ -359,7 +360,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           bottomNavigationBar: _buildBottomNav(),
-          drawer: _buildDrawer(), 
+          drawer: _buildDrawer(),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => DraggableScrollableSheet(
+                  initialChildSize: 0.82,
+                  minChildSize: 0.5,
+                  maxChildSize: 0.95,
+                  builder: (_, scrollController) => const AuraChatWidget(),
+                ),
+              );
+            },
+            backgroundColor: const Color(0xFF6366F1),
+            elevation: 6,
+            child: const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
+          ),
         );
       }
     );

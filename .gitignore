@@ -50,4 +50,5 @@ scratch/
 # Sensitive Database Credentials
 docs_y_recursos/supabase_credentials.txt
 
-
+# API Keys / Secrets
+lib/secrets.dart
