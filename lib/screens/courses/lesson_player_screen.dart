@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
@@ -5,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
+import 'package:confetti/confetti.dart';
 import 'package:aura_academy/screens/certificates/graduation_celebration_screen.dart';
 
 class LessonPlayerScreen extends StatefulWidget {
@@ -33,10 +35,12 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
   YoutubePlayerController? _ytController;
   VideoPlayerController? _videoPlayerController;
   ChewieController? _chewieController;
+  late ConfettiController _confettiController;
 
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
     _loadAllData(widget.initialLessonId);
   }
 
@@ -46,6 +50,7 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
     _videoPlayerController?.dispose();
     _chewieController?.dispose();
     _audioPlayer.dispose();
+    _confettiController.dispose();
     super.dispose();
   }
 
@@ -298,6 +303,23 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
     );
   }
 
+  void _triggerGraduation() {
+    _confettiController.play();
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => GraduationCelebrationScreen(
+              courseId: widget.courseId,
+              courseTitle: _course?['titulo'] ?? "Curso",
+            ),
+          ),
+        );
+      }
+    });
+  }
+
   Widget _buildBottomControl() {
     int totalLessons = 0;
     for (var m in _modules) {
@@ -305,49 +327,94 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
     }
     final bool isCourseCompleted = _completedLessonIds.length >= totalLessons && totalLessons > 0;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            offset: const Offset(0, -4),
-            blurRadius: 10,
-          )
-        ],
-      ),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isCourseCompleted
-              ? const Color(0xFF8B5CF6) // Púrpura para Graduarse
-              : (_isCompleted ? Colors.green : const Color(0xFF6366F1)),
-          foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    return Stack(
+      alignment: Alignment.topCenter,
+      children: [
+        // Confetti widget positioned at top-center
+        ConfettiWidget(
+          confettiController: _confettiController,
+          blastDirection: -pi / 2, // hacia arriba
+          emissionFrequency: 0.08,
+          numberOfParticles: 25,
+          maxBlastForce: 40,
+          minBlastForce: 15,
+          gravity: 0.3,
+          colors: const [
+            Color(0xFF8B5CF6),
+            Color(0xFFA855F7),
+            Color(0xFF6366F1),
+            Color(0xFFEC4899),
+            Color(0xFFF59E0B),
+            Colors.white,
+          ],
         ),
-        onPressed: () {
-          if (isCourseCompleted) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => GraduationCelebrationScreen(
-                  courseId: widget.courseId,
-                  courseTitle: _course?['titulo'] ?? "Curso",
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                offset: const Offset(0, -4),
+                blurRadius: 10,
+              )
+            ],
+          ),
+          child: isCourseCompleted
+              ? GestureDetector(
+                  onTap: _triggerGraduation,
+                  child: Container(
+                    height: 54,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF7C3AED), Color(0xFFA855F7), Color(0xFF6366F1)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF8B5CF6).withOpacity(0.5),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.school_rounded, color: Colors.white, size: 22),
+                          SizedBox(width: 10),
+                          Text(
+                            "¡Graduarse!",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              : ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isCompleted ? Colors.green : const Color(0xFF6366F1),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: _toggleCompletion,
+                  child: Text(
+                    _isCompleted ? "Completada" : "Marcar como completada",
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ),
-            );
-          } else {
-            _toggleCompletion();
-          }
-        },
-        child: Text(
-          isCourseCompleted
-              ? "Graduarse"
-              : (_isCompleted ? "Completada" : "Marcar como completada"),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-      ),
+      ],
     );
   }
 
