@@ -19,7 +19,7 @@ class LessonPlayerScreen extends StatefulWidget {
   State<LessonPlayerScreen> createState() => _LessonPlayerScreenState();
 }
 
-class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
+class _LessonPlayerScreenState extends State<LessonPlayerScreen> with TickerProviderStateMixin {
   final supabase = Supabase.instance.client;
   Map<String, dynamic>? _course;
   Map<String, dynamic>? _currentLesson;
@@ -36,11 +36,20 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
   VideoPlayerController? _videoPlayerController;
   ChewieController? _chewieController;
   late ConfettiController _confettiController;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
     super.initState();
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.06).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
     _loadAllData(widget.initialLessonId);
   }
 
@@ -51,6 +60,7 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
     _chewieController?.dispose();
     _audioPlayer.dispose();
     _confettiController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -340,24 +350,37 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
         ],
       ),
       child: isCourseCompleted
-          ? GestureDetector(
+          ? AnimatedBuilder(
+              animation: _pulseAnimation,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _pulseAnimation.value,
+                  child: child,
+                );
+              },
+              child: GestureDetector(
               onTap: _triggerGraduation,
-              child: Container(
-                height: 54,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF7C3AED), Color(0xFFA855F7), Color(0xFF6366F1)],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF8B5CF6).withOpacity(0.5),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
+              child: AnimatedBuilder(
+                animation: _pulseAnimation,
+                builder: (context, child) => Container(
+                  height: 54,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF7C3AED), Color(0xFFA855F7), Color(0xFF6366F1)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
                     ),
-                  ],
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF8B5CF6).withOpacity(0.3 + (_pulseAnimation.value - 1.0) * 5),
+                        blurRadius: 16 + (_pulseAnimation.value - 1.0) * 120,
+                        spreadRadius: (_pulseAnimation.value - 1.0) * 30,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: child,
                 ),
                 child: const Center(
                   child: Row(
@@ -378,6 +401,7 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
                   ),
                 ),
               ),
+            ),
             )
           : ElevatedButton(
               style: ElevatedButton.styleFrom(
