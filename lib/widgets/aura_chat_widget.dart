@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:aura_academy/services/groq_service.dart';
 
@@ -44,8 +44,11 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 120), () {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(_scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
       }
     });
   }
@@ -77,9 +80,14 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
         children: [
           if (!isUser) ...[
             Container(
-              width: 30, height: 30,
+              width: 30,
+              height: 30,
               decoration: const BoxDecoration(
-                gradient: LinearGradient(colors: [_primary, Color(0xFFA855F7)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                gradient: LinearGradient(
+                  colors: [_primary, Color(0xFFA855F7)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.auto_awesome, color: Colors.white, size: 15),
@@ -90,16 +98,38 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                gradient: isUser ? const LinearGradient(colors: [_primary, Color(0xFF8B5CF6)], begin: Alignment.topLeft, end: Alignment.bottomRight) : null,
+                gradient: isUser
+                    ? const LinearGradient(
+                        colors: [_primary, Color(0xFF8B5CF6)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
                 color: isUser ? null : const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18), topRight: const Radius.circular(18),
+                  topLeft: const Radius.circular(18),
+                  topRight: const Radius.circular(18),
                   bottomLeft: Radius.circular(isUser ? 18 : 4),
                   bottomRight: Radius.circular(isUser ? 4 : 18),
                 ),
-                boxShadow: [BoxShadow(color: isUser ? _primary.withOpacity(0.25) : Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2))],
+                boxShadow: [
+                  BoxShadow(
+                    color: isUser
+                        ? _primary.withOpacity(0.25)
+                        : Colors.black.withOpacity(0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              child: Text(message.text, style: GoogleFonts.outfit(color: isUser ? Colors.white : const Color(0xFF1E293B), fontSize: 14, height: 1.5)),
+              child: Text(
+                message.text,
+                style: GoogleFonts.outfit(
+                  color: isUser ? Colors.white : const Color(0xFF1E293B),
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+              ),
             ),
           ),
           if (isUser) const SizedBox(width: 8),
@@ -114,15 +144,25 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
       child: Row(
         children: [
           Container(
-            width: 30, height: 30,
-            decoration: const BoxDecoration(gradient: LinearGradient(colors: [_primary, Color(0xFFA855F7)]), shape: BoxShape.circle),
+            width: 30,
+            height: 30,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(colors: [_primary, Color(0xFFA855F7)]),
+              shape: BoxShape.circle,
+            ),
             child: const Icon(Icons.auto_awesome, color: Colors.white, size: 15),
           ),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(18)),
-            child: Row(mainAxisSize: MainAxisSize.min, children: List.generate(3, (i) => _AnimatedDot(delay: i * 200))),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(3, (i) => _AnimatedDot(delay: i * 200)),
+            ),
           ),
         ],
       ),
@@ -131,40 +171,68 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: Container(
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-        child: Column(
-          children: [
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        children: [
+          // Handle bar
           Center(
             child: Container(
               margin: const EdgeInsets.only(top: 12, bottom: 4),
-              width: 40, height: 4,
-              decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(2)),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.black12,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ),
+          // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0)))),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+            ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(gradient: const LinearGradient(colors: [_primary, Color(0xFFA855F7)]), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [_primary, Color(0xFFA855F7)]),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
                 ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Aura AI', style: GoogleFonts.montserrat(color: const Color(0xFF1E293B), fontSize: 15, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Aura AI',
+                      style: GoogleFonts.montserrat(
+                        color: const Color(0xFF1E293B),
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     Row(
                       children: [
-                        Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle)),
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                         const SizedBox(width: 4),
-                        Text('Llama 3.3 - En linea', style: GoogleFonts.outfit(color: const Color(0xFF94A3B8), fontSize: 11)),
+                        Text(
+                          'Llama 3.3 - En linea',
+                          style: GoogleFonts.outfit(color: const Color(0xFF94A3B8), fontSize: 11),
+                        ),
                       ],
                     ),
                   ],
@@ -175,15 +243,22 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
                     setState(() {
                       _groqService.clearHistory();
                       _messages.clear();
-                      _messages.add(_ChatMessage(text: 'Conversacion reiniciada. En que te puedo ayudar?', isUser: false));
+                      _messages.add(_ChatMessage(
+                        text: 'Conversacion reiniciada. En que te puedo ayudar?',
+                        isUser: false,
+                      ));
                     });
                   },
                   icon: const Icon(Icons.refresh_rounded, color: Color(0xFF94A3B8), size: 20),
                 ),
-                IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded, color: Color(0xFF94A3B8), size: 20)),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded, color: Color(0xFF94A3B8), size: 20),
+                ),
               ],
             ),
           ),
+          // Messages list
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
@@ -195,83 +270,127 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
               },
             ),
           ),
+          // Input area
           Container(
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
-            decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: Color(0xFFE2E8F0)))),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            ),
             child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                    ),
+                    child: TextField(
+                      controller: _textController,
+                      style: GoogleFonts.outfit(
+                        color: const Color(0xFF1E293B),
+                        fontSize: 14,
                       ),
-                      child: TextField(
-                        controller: _textController,
-                        style: GoogleFonts.outfit(color: const Color(0xFF1E293B), fontSize: 14),
-                        maxLines: 5,
-                        minLines: 1,
-                        cursorColor: _primary,
-                        decoration: InputDecoration(
-                          hintText: 'Escribe tu pregunta...',
-                          hintStyle: GoogleFonts.outfit(color: const Color(0xFFCBD5E1), fontSize: 14),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          border: InputBorder.none,
+                      maxLines: 5,
+                      minLines: 1,
+                      cursorColor: _primary,
+                      decoration: InputDecoration(
+                        hintText: 'Escribe tu pregunta...',
+                        hintStyle: GoogleFonts.outfit(
+                          color: const Color(0xFFCBD5E1),
+                          fontSize: 14,
                         ),
-                        onSubmitted: (_) => _sendMessage(),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        border: InputBorder.none,
                       ),
+                      onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: _sendMessage,
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        gradient: _isLoading ? null : const LinearGradient(colors: [_primary, _primaryDark], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                        color: _isLoading ? const Color(0xFFE2E8F0) : null,
-                        shape: BoxShape.circle,
-                        boxShadow: _isLoading ? [] : [BoxShadow(color: _primary.withOpacity(0.4), blurRadius: 12, offset: const Offset(0, 4))],
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF94A3B8)))
-                          : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: _sendMessage,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: _isLoading
+                          ? null
+                          : const LinearGradient(
+                              colors: [_primary, _primaryDark],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                      color: _isLoading ? const Color(0xFFE2E8F0) : null,
+                      shape: BoxShape.circle,
+                      boxShadow: _isLoading
+                          ? []
+                          : [
+                              BoxShadow(
+                                color: _primary.withOpacity(0.4),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                     ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFF94A3B8),
+                            ),
+                          )
+                        : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
       ),
-    ),
-  );
+    );
   }
 }
 
 class _AnimatedDot extends StatefulWidget {
   final int delay;
   const _AnimatedDot({required this.delay});
+
   @override
   State<_AnimatedDot> createState() => _AnimatedDotState();
 }
 
-class _AnimatedDotState extends State<_AnimatedDot> with SingleTickerProviderStateMixin {
+class _AnimatedDotState extends State<_AnimatedDot>
+    with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _anim;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
-    Future.delayed(Duration(milliseconds: widget.delay), () { if (mounted) _ctrl.repeat(reverse: true); });
-    _anim = Tween<double>(begin: 0.3, end: 1.0).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    Future.delayed(Duration(milliseconds: widget.delay), () {
+      if (mounted) _ctrl.repeat(reverse: true);
+    });
+    _anim = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -279,8 +398,12 @@ class _AnimatedDotState extends State<_AnimatedDot> with SingleTickerProviderSta
       animation: _anim,
       builder: (_, __) => Container(
         margin: const EdgeInsets.symmetric(horizontal: 3),
-        width: 8, height: 8,
-        decoration: BoxDecoration(color: const Color(0xFF6366F1).withOpacity(_anim.value), shape: BoxShape.circle),
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(
+          color: const Color(0xFF6366F1).withOpacity(_anim.value),
+          shape: BoxShape.circle,
+        ),
       ),
     );
   }
