@@ -165,26 +165,6 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
           debugPrint("Error audio: $e");
         }
 
-        int totalLessons = 0;
-        for (var m in _modules) {
-          totalLessons += (m['lecciones'] as List? ?? []).length;
-        }
-
-        if (_completedLessonIds.length >= totalLessons && totalLessons > 0 && mounted) {
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => GraduationCelebrationScreen(
-                    courseId: widget.courseId,
-                    courseTitle: _course?['titulo'] ?? "Curso",
-                  ),
-                ),
-              );
-            }
-          });
-        }
       }
     } catch (e) {
       debugPrint("Error: $e");
@@ -319,6 +299,12 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
   }
 
   Widget _buildBottomControl() {
+    int totalLessons = 0;
+    for (var m in _modules) {
+      totalLessons += (m['lecciones'] as List? ?? []).length;
+    }
+    final bool isCourseCompleted = _completedLessonIds.length >= totalLessons && totalLessons > 0;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -333,14 +319,32 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
       ),
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: _isCompleted ? Colors.green : const Color(0xFF6366F1),
+          backgroundColor: isCourseCompleted
+              ? const Color(0xFF8B5CF6) // Púrpura para Graduarse
+              : (_isCompleted ? Colors.green : const Color(0xFF6366F1)),
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 50),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
-        onPressed: () => _toggleCompletion(),
+        onPressed: () {
+          if (isCourseCompleted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => GraduationCelebrationScreen(
+                  courseId: widget.courseId,
+                  courseTitle: _course?['titulo'] ?? "Curso",
+                ),
+              ),
+            );
+          } else {
+            _toggleCompletion();
+          }
+        },
         child: Text(
-          _isCompleted ? "Completada" : "Marcar como completada",
+          isCourseCompleted
+              ? "Graduarse"
+              : (_isCompleted ? "Completada" : "Marcar como completada"),
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
