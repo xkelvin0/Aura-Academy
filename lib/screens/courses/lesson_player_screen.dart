@@ -327,94 +327,71 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
     }
     final bool isCourseCompleted = _completedLessonIds.length >= totalLessons && totalLessons > 0;
 
-    return Stack(
-      alignment: Alignment.topCenter,
-      children: [
-        // Confetti widget positioned at top-center
-        ConfettiWidget(
-          confettiController: _confettiController,
-          blastDirection: -pi / 2, // hacia arriba
-          emissionFrequency: 0.08,
-          numberOfParticles: 25,
-          maxBlastForce: 40,
-          minBlastForce: 15,
-          gravity: 0.3,
-          colors: const [
-            Color(0xFF8B5CF6),
-            Color(0xFFA855F7),
-            Color(0xFF6366F1),
-            Color(0xFFEC4899),
-            Color(0xFFF59E0B),
-            Colors.white,
-          ],
-        ),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                offset: const Offset(0, -4),
-                blurRadius: 10,
-              )
-            ],
-          ),
-          child: isCourseCompleted
-              ? GestureDetector(
-                  onTap: _triggerGraduation,
-                  child: Container(
-                    height: 54,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF7C3AED), Color(0xFFA855F7), Color(0xFF6366F1)],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF8B5CF6).withOpacity(0.5),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, -4),
+            blurRadius: 10,
+          )
+        ],
+      ),
+      child: isCourseCompleted
+          ? GestureDetector(
+              onTap: _triggerGraduation,
+              child: Container(
+                height: 54,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF7C3AED), Color(0xFFA855F7), Color(0xFF6366F1)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF8B5CF6).withOpacity(0.5),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.school_rounded, color: Colors.white, size: 22),
+                      SizedBox(width: 10),
+                      Text(
+                        "¡Graduarse!",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
                         ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.school_rounded, color: Colors.white, size: 22),
-                          SizedBox(width: 10),
-                          Text(
-                            "¡Graduarse!",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
                       ),
-                    ),
-                  ),
-                )
-              : ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isCompleted ? Colors.green : const Color(0xFF6366F1),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  onPressed: _toggleCompletion,
-                  child: Text(
-                    _isCompleted ? "Completada" : "Marcar como completada",
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ],
                   ),
                 ),
-        ),
-      ],
+              ),
+            )
+          : ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _isCompleted ? Colors.green : const Color(0xFF6366F1),
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: _toggleCompletion,
+              child: Text(
+                _isCompleted ? "Completada" : "Marcar como completada",
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
     );
   }
 
@@ -435,47 +412,74 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
 
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          title: Text(_currentLesson?['titulo'] ?? "Lección", style: const TextStyle(fontSize: 16)),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          elevation: 0,
-        ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildVideoPlayer(),
-              const TabBar(
-                tabs: [Tab(text: "Contenido"), Tab(text: "Recursos")],
-                labelColor: Color(0xFF6366F1),
-                unselectedLabelColor: Colors.grey,
-                indicatorColor: Color(0xFF6366F1),
-              ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: TabBarView(
-                        children: [
-                          _buildCurriculumList(),
-                          _buildResourcesList(),
-                        ],
-                      ),
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+              title: Text(_currentLesson?['titulo'] ?? "Lección", style: const TextStyle(fontSize: 16)),
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              elevation: 0,
+            ),
+            body: SafeArea(
+              child: Column(
+                children: [
+                  _buildVideoPlayer(),
+                  const TabBar(
+                    tabs: [Tab(text: "Contenido"), Tab(text: "Recursos")],
+                    labelColor: Color(0xFF6366F1),
+                    unselectedLabelColor: Colors.grey,
+                    indicatorColor: Color(0xFF6366F1),
+                  ),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: TabBarView(
+                            children: [
+                              _buildCurriculumList(),
+                              _buildResourcesList(),
+                            ],
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: _buildBottomControl(),
+                        ),
+                      ],
                     ),
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: _buildBottomControl(),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          // Confetti overlay covering the FULL screen
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirection: -pi / 2,
+              blastDirectionality: BlastDirectionality.explosive,
+              emissionFrequency: 0.06,
+              numberOfParticles: 30,
+              maxBlastForce: 60,
+              minBlastForce: 25,
+              gravity: 0.2,
+              colors: const [
+                Color(0xFF8B5CF6),
+                Color(0xFFA855F7),
+                Color(0xFF6366F1),
+                Color(0xFFEC4899),
+                Color(0xFFF59E0B),
+                Color(0xFF10B981),
+                Colors.white,
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
