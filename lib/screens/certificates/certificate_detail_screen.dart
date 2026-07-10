@@ -104,7 +104,7 @@ class _CertificateDetailScreenState extends State<CertificateDetailScreen> {
                 borderRadius: BorderRadius.circular(24),
               ),
               child: QrImageView(
-                data: "https://silver-axolotl-4db970.netlify.app/?id=$hash",
+                data: "https://xkelvin0.github.io/Aura-Academy/verificar.html?id=$hash",
                 version: QrVersions.auto,
                 size: 200,
               ),
@@ -406,9 +406,9 @@ class _CertificateDetailScreenState extends State<CertificateDetailScreen> {
               onPressed: () async {
                 final Uri url;
                 if (kIsWeb) {
-                  url = Uri.parse("${Uri.base.scheme}://${Uri.base.host}:${Uri.base.port}/index.html");
+                  url = Uri.parse("${Uri.base.scheme}://${Uri.base.host}:${Uri.base.port}/verificar.html");
                 } else {
-                  url = Uri.parse("file:///C:/Aura%20Academy/index.html");
+                  url = Uri.parse("https://xkelvin0.github.io/Aura-Academy/verificar.html");
                 }
                 if (await canLaunchUrl(url)) {
                   await launchUrl(url, mode: LaunchMode.externalApplication);

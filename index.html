@@ -3,179 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verificación Oficial | Aura Academy</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;900&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <title>Descargar Aura Academy | El Futuro del Aprendizaje</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&family=Outfit:wght@300;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Montserrat', sans-serif; background-color: #f1f5f9; color: #1e293b; }
-        .aura-card { background: white; border: 1px solid rgba(99, 102, 241, 0.1); box-shadow: 0 20px 50px rgba(99, 102, 241, 0.1); }
-        .aura-text-gradient { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .gold-seal { color: #d4af37; filter: drop-shadow(0 4px 10px rgba(212, 175, 55, 0.3)); }
-        @keyframes pulse-soft { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
-        .verify-pulse { animation: pulse-soft 2s ease-in-out infinite; }
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #d946ef;
+            --dark: #0f172a;
+            --light: #f8fafc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--dark);
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(217, 70, 239, 0.15) 0%, transparent 40%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--light);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 90%;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Glassmorphism Card */
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 40px;
+            padding: 60px 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-container {
+            margin-bottom: 30px;
+        }
+
+        .logo-icon {
+            font-size: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.5));
+        }
+
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+
+        h1 span {
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            margin-bottom: 45px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 20px 45px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-btn:hover {
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 20px 35px -5px rgba(99, 102, 241, 0.6);
+        }
+
+        .download-btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-glow {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .download-btn:hover .btn-glow {
+            opacity: 1;
+            animation: rotate 3s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .version-info {
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .badge {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-weight: 600;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        /* Floating elements decorations */
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 0;
+            filter: blur(80px);
+        }
+
+        .circle-1 {
+            width: 300px;
+            height: 300px;
+            background: var(--primary);
+            top: -100px;
+            right: -100px;
+            opacity: 0.2;
+            animation: float 10s infinite alternate;
+        }
+
+        .circle-2 {
+            width: 400px;
+            height: 400px;
+            background: var(--secondary);
+            bottom: -150px;
+            left: -150px;
+            opacity: 0.2;
+            animation: float 8s infinite alternate-reverse;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .card { padding: 40px 20px; }
+            .download-btn { width: 100%; justify-content: center; }
+        }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6">
-    <div id="app" class="w-full max-w-md">
-        <!-- LOADING -->
-        <div id="loading" class="hidden text-center">
-            <div class="inline-block w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p class="text-indigo-600 font-bold tracking-widest text-xs uppercase">Verificando Credenciales...</p>
-        </div>
+<body>
+    <div class="circle circle-1"></div>
+    <div class="circle circle-2"></div>
 
-        <!-- MANUAL ENTRY -->
-        <div id="manual-entry" class="hidden aura-card p-10 rounded-[40px] text-center">
-            <div class="verify-pulse mb-6 inline-block">
-                <svg class="w-16 h-16 text-indigo-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                </svg>
+    <div class="container">
+        <div class="card">
+            <div class="logo-container">
+                <i class="fas fa-graduation-cap logo-icon"></i>
+                <p style="font-family: 'Montserrat'; font-weight: 800; font-size: 1.5rem; letter-spacing: 2px;">AURA ACADEMY</p>
             </div>
-            <h1 class="text-2xl font-black text-slate-900 mb-2 uppercase">Portal de Verificación</h1>
-            <p class="text-slate-500 text-sm mb-6">Ingresa el ID o hash de verificación para validar la autenticidad del certificado.</p>
+
+            <h1>Lleva tu aprendizaje <span>al siguiente nivel</span></h1>
             
-            <div class="mb-6 text-left">
-                <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">ID de Verificación (Hash)</label>
-                <textarea id="hashInput" rows="3" placeholder="Pega el código aquí (ej. fb11b956990c...)" class="w-full p-4 border border-slate-200 rounded-2xl font-mono text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 resize-none"></textarea>
-            </div>
+            <p class="subtitle">
+                Accede a los mejores cursos, gestiona tus clases y obtén certificados oficiales desde la palma de tu mano. Aura Academy es la plataforma educativa diseñada para tu éxito profesional.
+            </p>
 
-            <button onclick="handleManualVerify()" class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold uppercase tracking-widest text-xs hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 mb-4">Verificar Ahora</button>
-        </div>
-
-        <!-- ERROR -->
-        <div id="error" class="hidden aura-card p-10 rounded-[40px] text-center">
-            <div class="text-5xl mb-6">🚫</div>
-            <h1 class="text-2xl font-black text-slate-900 mb-2 uppercase">No Encontrado</h1>
-            <p id="errorMsg" class="text-slate-500 text-sm mb-8">Este código no corresponde a un certificado emitido por Aura Academy.</p>
-            <button onclick="showManualEntry()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold uppercase tracking-widest text-xs hover:bg-slate-800 transition-all">Regresar</button>
-        </div>
-
-        <!-- SUCCESS -->
-        <div id="success" class="hidden aura-card p-1 rounded-[40px] relative overflow-hidden">
-            <!-- Header Pattern -->
-            <div class="h-32 bg-indigo-50 w-full absolute top-0 left-0 -z-0 opacity-50"></div>
-            
-            <div class="p-8 pt-12 text-center relative z-10">
-                <!-- Seal Icon -->
-                <div class="verify-pulse mb-6 inline-block">
-                    <svg class="w-20 h-20 gold-seal" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.64.304 1.24.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                    </svg>
-                </div>
-
-                <h2 class="text-indigo-600 text-[10px] font-black tracking-[0.4em] mb-2 uppercase">Aura Academy Official</h2>
-                <h1 class="aura-text-gradient text-3xl font-black mb-10 tracking-tighter uppercase leading-none">Certificado<br>Verificado</h1>
-
-                <div class="space-y-8 text-left bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                    <div>
-                        <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest mb-1">Nombre del Graduado</p>
-                        <p id="studentName" class="text-lg font-bold text-slate-900 uppercase tracking-tight">---</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest mb-1">Especialidad</p>
-                        <p id="courseTitle" class="text-md font-bold text-indigo-600">---</p>
-                    </div>
-                    <div class="flex justify-between items-end border-t border-slate-200 pt-6">
-                        <div>
-                            <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest mb-1">Fecha Emisión</p>
-                            <p id="issueDate" class="text-sm font-bold text-slate-800">---</p>
-                        </div>
-                        <div class="text-right">
-                            <span class="px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black rounded-full uppercase tracking-widest">
-                                Válido ✅
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-8">
-                    <p class="text-slate-400 text-[8px] font-bold uppercase tracking-widest mb-2">Seguridad Blockchain / Hash</p>
-                    <p id="certHash" class="text-[9px] font-mono text-slate-400 break-all leading-relaxed bg-white p-3 rounded-xl border border-slate-100">---</p>
-                </div>
-
-                <button onclick="showManualEntry()" class="w-full mt-6 py-3 border border-indigo-200 text-indigo-600 rounded-2xl font-bold uppercase tracking-widest text-[10px] hover:bg-indigo-50 transition-all">Validar Otro Código</button>
-
-                <div class="mt-8 pt-6 border-t border-slate-100">
-                    <img src="https://img.icons8.com/color/48/000000/google-logo.png" class="w-6 h-6 grayscale opacity-30 inline-block mb-2">
-                    <p class="text-slate-300 text-[8px] font-medium uppercase tracking-tighter">Powered by Aura Infrastructure</p>
+            <div class="qr-section" style="margin-bottom: 35px; animation: fadeIn 1.2s ease-out;">
+                <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 15px;">Escanea para descargar en tu móvil</p>
+                <div style="background: white; padding: 15px; display: inline-block; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://xkelvin0.github.io/Aura-Academy/" alt="QR Code" style="display: block;">
                 </div>
             </div>
+
+            <a href="netlify_deploy/aura_academy.apk" class="download-btn" download>
+                <i class="fas fa-download"></i>
+                DESCARGAR APK
+                <div class="btn-glow"></div>
+            </a>
+
+            <div class="version-info">
+                <span>Versión <span class="badge">1.0.0 Stable</span></span>
+                <span>Tamaño <span class="badge">26.4 MB</span></span>
+                <span>Plataforma <span class="badge">Android 8.0+</span></span>
+            </div>
         </div>
+
+        <p style="margin-top: 40px; color: #475569; font-size: 0.8rem;">
+            &copy; 2026 Aura Academy. Todos los derechos reservados.<br>
+            Desarrollado con pasión para mentes brillantes.
+        </p>
     </div>
 
     <script>
-        const SB_URL = 'https://jfbwkofperbqvvvexvsc.supabase.co';
-        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmYndrb2ZwZXJicXZ2dmV4dnNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3OTk4MDAsImV4cCI6MjA5MTM3NTgwMH0.HXztt2dTbpItfdItaieqQrfZTPp7ft6kygU0hp4R7VU';
-        const client = supabase.createClient(SB_URL, SB_KEY);
-
-        function hideAllScreens() {
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('manual-entry').classList.add('hidden');
-            document.getElementById('error').classList.add('hidden');
-            document.getElementById('success').classList.add('hidden');
-        }
-
-        function showManualEntry() {
-            hideAllScreens();
-            document.getElementById('hashInput').value = '';
-            document.getElementById('manual-entry').classList.remove('hidden');
-        }
-
-        async function verifyCode(certId) {
-            if (!certId || certId.trim() === '') {
-                return showError("Por favor ingresa un código de verificación válido.");
-            }
+        // Efecto sutil de seguimiento de mouse en la tarjeta
+        const card = document.querySelector('.card');
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth - 0.5;
+            const y = e.clientY / window.innerHeight - 0.5;
             
-            hideAllScreens();
-            document.getElementById('loading').classList.remove('hidden');
-
-            try {
-                const cleanId = certId.trim();
-                const { data, error } = await client
-                    .from('certificados')
-                    .select('*, perfiles:perfil_id(nombre_completo), cursos:curso_id(titulo)')
-                    .eq('hash_validacion', cleanId)
-                    .single();
-
-                if (error || !data) {
-                    return showError("Este código no corresponde a un certificado emitido por Aura Academy.");
-                }
-
-                document.getElementById('studentName').innerText = data.perfiles.nombre_completo;
-                document.getElementById('courseTitle').innerText = data.cursos.titulo;
-                document.getElementById('certHash').innerText = data.hash_validacion;
-                document.getElementById('issueDate').innerText = new Date(data.fecha_emision).toLocaleDateString();
-
-                hideAllScreens();
-                document.getElementById('success').classList.remove('hidden');
-            } catch (e) { 
-                showError("Ocurrió un error inesperado al procesar la verificación."); 
-            }
-        }
-
-        async function startVerificationFlow() {
-            const certId = new URLSearchParams(window.location.search).get('id');
-            if (!certId) {
-                showManualEntry();
-            } else {
-                verifyCode(certId);
-            }
-        }
-
-        function handleManualVerify() {
-            const code = document.getElementById('hashInput').value;
-            verifyCode(code);
-        }
-
-        function showError(message) {
-            hideAllScreens();
-            if (message) {
-                document.getElementById('errorMsg').innerText = message;
-            }
-            document.getElementById('error').classList.remove('hidden');
-        }
-
-        startVerificationFlow();
+            card.style.transform = `perspective(1000px) rotateY(${x * 5}deg) rotateX(${-y * 5}deg)`;
+        });
     </script>
 </body>
 </html>
