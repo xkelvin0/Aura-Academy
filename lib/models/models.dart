@@ -90,3 +90,8 @@ class Inscripcion {
     required this.totalLecciones,
   });
 }
+
+
+
+
+
