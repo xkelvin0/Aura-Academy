@@ -6,6 +6,7 @@ import 'package:aura_academy/screens/courses/course_detail_screen.dart';
 import 'package:aura_academy/screens/courses/lesson_player_screen.dart';
 import 'package:aura_academy/screens/dashboard/dashboard_screen.dart'; // <--- Para el controlador de updates
 import 'package:aura_academy/screens/instructor/create_course_screen.dart';
+import 'package:aura_academy/screens/certificates/graduation_celebration_screen.dart';
 
 class MyCoursesScreen extends StatefulWidget {
   final VoidCallback? onBack; // <--- Callback para volver
@@ -446,11 +447,38 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(color: Color(0xFFEEF2FF), shape: BoxShape.circle),
-                      child: const Icon(Icons.play_arrow_rounded, color: Color(0xFF6366F1), size: 24),
-                    ),
+                    progreso >= 100
+                        ? InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => GraduationCelebrationScreen(
+                                    courseId: curso['id'],
+                                    courseTitle: curso['titulo'] ?? "Curso",
+                                  ),
+                                ),
+                              ).then((_) => _loadMyCourses());
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFECFDF5),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.school_rounded,
+                                color: Color(0xFF10B981),
+                                size: 24,
+                              ),
+                            ),
+                          )
+                        : Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(color: Color(0xFFEEF2FF), shape: BoxShape.circle),
+                            child: const Icon(Icons.play_arrow_rounded, color: Color(0xFF6366F1), size: 24),
+                          ),
                   ],
                 ),
               ),
