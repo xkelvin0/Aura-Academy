@@ -721,73 +721,102 @@ Instrucciones:
           )
         ],
       ),
-      child: isCourseCompleted
-          ? AnimatedBuilder(
-              animation: _pulseAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _pulseAnimation.value,
-                  child: child,
-                );
-              },
-              child: GestureDetector(
-              onTap: _triggerGraduation,
-              child: AnimatedBuilder(
-                animation: _pulseAnimation,
-                builder: (context, child) => Container(
-                  height: 54,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF7C3AED), Color(0xFFA855F7), Color(0xFF6366F1)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF8B5CF6).withOpacity(0.3 + (_pulseAnimation.value - 1.0) * 5),
-                        blurRadius: 16 + (_pulseAnimation.value - 1.0) * 120,
-                        spreadRadius: (_pulseAnimation.value - 1.0) * 30,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: child,
+      child: Row(
+        children: [
+          // Botón del Tutor IA (Aura AI 2.0)
+          GestureDetector(
+            onTap: _openTutorChat,
+            child: Container(
+              width: 50,
+              height: 50,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF6366F1).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.3), width: 1.5),
+              ),
+              child: const Center(
+                child: Icon(
+                  Icons.psychology_rounded,
+                  color: Color(0xFF6366F1),
+                  size: 26,
                 ),
-                child: const Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.school_rounded, color: Colors.white, size: 22),
-                      SizedBox(width: 10),
-                      Text(
-                        "¡Graduarse!",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
+              ),
+            ),
+          ),
+          // Botón Principal (Graduarse o Completar)
+          Expanded(
+            child: isCourseCompleted
+                ? AnimatedBuilder(
+                    animation: _pulseAnimation,
+                    builder: (context, child) {
+                      return Transform.scale(
+                        scale: _pulseAnimation.value,
+                        child: child,
+                      );
+                    },
+                    child: GestureDetector(
+                      onTap: _triggerGraduation,
+                      child: AnimatedBuilder(
+                        animation: _pulseAnimation,
+                        builder: (context, child) => Container(
+                          height: 50,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF7C3AED), Color(0xFFA855F7), Color(0xFF6366F1)],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF8B5CF6).withOpacity(0.3 + (_pulseAnimation.value - 1.0) * 5),
+                                blurRadius: 16 + (_pulseAnimation.value - 1.0) * 120,
+                                spreadRadius: (_pulseAnimation.value - 1.0) * 30,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: child,
+                        ),
+                        child: const Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.school_rounded, color: Colors.white, size: 22),
+                              SizedBox(width: 10),
+                              Text(
+                                "¡Graduarse!",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ],
+                    ),
+                  )
+                : ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isCompleted ? Colors.green : const Color(0xFF6366F1),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    onPressed: _toggleCompletion,
+                    child: Text(
+                      _isCompleted ? "Completada" : "Marcar como completada",
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ),
-              ),
-            ),
-            )
-          : ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _isCompleted ? Colors.green : const Color(0xFF6366F1),
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              onPressed: _toggleCompletion,
-              child: Text(
-                _isCompleted ? "Completada" : "Marcar como completada",
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -856,12 +885,6 @@ Instrucciones:
                   ),
                 ],
               ),
-            ),
-            floatingActionButton: FloatingActionButton(
-              onPressed: _openTutorChat,
-              backgroundColor: const Color(0xFF6366F1),
-              child: const Icon(Icons.psychology_rounded, color: Colors.white, size: 28),
-            ),
           ),
           // Confetti overlay covering the FULL screen
           Align(
