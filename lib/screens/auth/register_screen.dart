@@ -94,18 +94,100 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
 
         if (mounted) {
-          // Mostramos mensaje de éxito y regresamos al Login
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('¡Cuenta creada con éxito! Inicia sesión.'),
-              backgroundColor: Color(0xFF6366F1),
-            ),
-          );
-          // Navegamos al Dashboard (Fase 6)
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const CategorySelectionScreen()),
-            (route) => false,
+          // Mostramos un diálogo modal explicativo y premium
+          showDialog(
+            context: context,
+            barrierDismissible: false, // El usuario debe cerrarlo explícitamente con el botón
+            builder: (BuildContext ctx) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                backgroundColor: Colors.white,
+                title: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFEEF2FF),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.mark_email_read_rounded,
+                        color: Color(0xFF6366F1),
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Verifica tu correo',
+                      style: GoogleFonts.montserrat(
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1E293B),
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '¡Tu registro en Aura Academy ha sido exitoso! 🎉',
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1E293B),
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Hemos enviado un enlace de confirmación a tu correo. Por favor, revísalo y haz clic en el enlace para activar tu cuenta antes de iniciar sesión.',
+                      style: GoogleFonts.outfit(
+                        color: const Color(0xFF64748B),
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Nota: Si no lo encuentras en unos minutos, revisa tu carpeta de Spam.',
+                      style: GoogleFonts.outfit(
+                        color: const Color(0xFF94A3B8),
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+                actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                actions: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx); // Cierra el modal
+                      Navigator.pop(context); // Regresa a la pantalla anterior (Login / Welcome)
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6366F1),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Entendido, ir al Login',
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           );
         }
       }
