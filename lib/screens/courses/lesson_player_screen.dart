@@ -885,6 +885,7 @@ Instrucciones:
                   ),
                 ],
               ),
+            ),
           ),
           // Confetti overlay covering the FULL screen
           Align(
