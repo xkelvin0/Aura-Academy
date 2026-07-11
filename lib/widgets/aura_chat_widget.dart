@@ -148,7 +148,7 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
             const SizedBox(height: 6),
             Padding(
               padding: const EdgeInsets.only(left: 38),
-            GestureDetector(
+              child: GestureDetector(
               onTap: () {
                 if (widget.onAction != null) {
                   widget.onAction!(message.action!);
