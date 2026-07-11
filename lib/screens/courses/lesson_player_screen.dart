@@ -7,6 +7,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
 import 'package:confetti/confetti.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:aura_academy/screens/certificates/graduation_celebration_screen.dart';
 
 class LessonPlayerScreen extends StatefulWidget {
