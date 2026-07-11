@@ -31,7 +31,7 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
   void initState() {
     super.initState();
     _messages.add(_ChatMessage(
-      text: 'Hola! Soy Aura AI 👋\n\nPuedo ayudarte con tus cursos y ademas puedo navegar la app por ti. Prueba decirme:\n• "Llévame a mis cursos"\n• "Busca un curso de Python"\n• "Abre mis certificados"\n• O hazme cualquier pregunta academica',
+      text: 'Hola! Soy Aura AI 👋\n\nPuedo ayudarte con tus cursos y además puedo navegar la app por ti. Prueba decirme:\n• "Llévame a mis cursos"\n• "Abre mis certificados"\n• "Abre la configuración"\n• O hazme cualquier pregunta académica',
       isUser: false,
     ));
   }
