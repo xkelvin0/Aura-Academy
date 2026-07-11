@@ -4,7 +4,8 @@ import 'package:aura_academy/services/groq_service.dart';
 
 class AuraChatWidget extends StatefulWidget {
   final Function(AppAction action)? onAction;
-  const AuraChatWidget({super.key, this.onAction});
+  final int currentTabIndex;
+  const AuraChatWidget({super.key, this.onAction, this.currentTabIndex = 0});
 
   @override
   State<AuraChatWidget> createState() => _AuraChatWidgetState();
@@ -143,8 +144,11 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
               if (isUser) const SizedBox(width: 8),
             ],
           ),
-          // Action chip si el bot incluyo una accion valida (no ignorada como ir a inicio)
-          if (!isUser && message.action != null && !(message.action!.type == 'navigate_tab' && (message.action!.param == '0' || message.action!.param == null))) ...[
+          // Action chip si el bot incluyo una accion valida
+          if (!isUser && message.action != null && 
+              !(message.action!.type == 'navigate_tab' && 
+                (message.action!.param == '0' || message.action!.param == null) && 
+                widget.currentTabIndex == 0)) ...[
             const SizedBox(height: 6),
             Padding(
               padding: const EdgeInsets.only(left: 38),

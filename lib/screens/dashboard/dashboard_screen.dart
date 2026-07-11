@@ -379,6 +379,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: SizedBox(
                     height: MediaQuery.of(ctx).size.height * 0.80,
                     child: AuraChatWidget(
+                      currentTabIndex: _selectedIndex,
                       onAction: (action) {
                         if (action.type == 'navigate_tab') {
                           final idx = int.tryParse(action.param ?? '0') ?? 0;
