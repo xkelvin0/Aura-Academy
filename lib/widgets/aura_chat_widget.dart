@@ -77,7 +77,6 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
     if (response.action != null && widget.onAction != null) {
       Future.delayed(const Duration(milliseconds: 1200), () {
         if (mounted) {
-          Navigator.pop(context); // cierra el chat
           widget.onAction!(response.action!);
         }
       });

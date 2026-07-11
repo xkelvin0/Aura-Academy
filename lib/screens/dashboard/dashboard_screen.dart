@@ -382,13 +382,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       onAction: (action) {
                         if (action.type == 'navigate_tab') {
                           final idx = int.tryParse(action.param ?? '0') ?? 0;
-                          setState(() {
-                            _selectedIndex = idx;
-                          });
+                          if (_selectedIndex != idx) {
+                            setState(() {
+                              _selectedIndex = idx;
+                            });
+                            Navigator.pop(context); // Solo cierra si cambia de tab
+                          }
                         } else if (action.type == 'search_courses') {
                           setState(() {
                             _selectedIndex = 1; // Tab de búsqueda/exploración
                           });
+                          Navigator.pop(context);
                           // Usar un delay para dar tiempo a que cargue la pantalla y luego simular la búsqueda
                           Future.delayed(const Duration(milliseconds: 300), () {
                             if (action.param != null) {
@@ -396,11 +400,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             }
                           });
                         } else if (action.type == 'open_certificates') {
+                          Navigator.pop(context);
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => CertificatesScreen()),
                           );
                         } else if (action.type == 'open_settings') {
+                          Navigator.pop(context);
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => const SettingsScreen()),
