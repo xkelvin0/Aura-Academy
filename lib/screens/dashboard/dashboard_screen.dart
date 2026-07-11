@@ -397,7 +397,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         } else if (action.type == 'open_certificates') {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const CertificatesScreen()),
+                            MaterialPageRoute(builder: (context) => CertificatesScreen()),
                           );
                         } else if (action.type == 'open_settings') {
                           Navigator.push(
