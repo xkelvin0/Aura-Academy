@@ -382,11 +382,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       onAction: (action) {
                         if (action.type == 'navigate_tab') {
                           final idx = int.tryParse(action.param ?? '0') ?? 0;
-                          if (_selectedIndex != idx) {
+                          // Ignoramos ir al Tab 0 (Inicio) para evitar falsos positivos con saludos.
+                          // Solo navegamos y cerramos si es otra pestaña (como Buscar o Perfil).
+                          if (idx != 0 && _selectedIndex != idx) {
                             setState(() {
                               _selectedIndex = idx;
                             });
-                            Navigator.pop(context); // Solo cierra si cambia de tab
+                            Navigator.pop(context); 
                           }
                         } else if (action.type == 'search_courses') {
                           setState(() {
