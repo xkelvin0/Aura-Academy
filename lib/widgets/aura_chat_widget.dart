@@ -386,11 +386,6 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
                   query: "Llévame a mis cursos",
                 ),
                 _buildSuggestionChip(
-                  icon: Icons.search_rounded,
-                  label: "Buscar Python",
-                  query: "Busca un curso de Python",
-                ),
-                _buildSuggestionChip(
                   icon: Icons.workspace_premium_rounded,
                   label: "Diplomas",
                   query: "Abre mis certificados",

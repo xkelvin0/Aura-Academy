@@ -382,9 +382,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       onAction: (action) {
                         if (action.type == 'navigate_tab') {
                           final idx = int.tryParse(action.param ?? '0') ?? 0;
-                          // Ignoramos ir al Tab 0 (Inicio) para evitar falsos positivos con saludos.
-                          // Solo navegamos y cerramos si es otra pestaña (como Buscar o Perfil).
-                          if (idx != 0 && _selectedIndex != idx) {
+                          // Ahora sí permitimos ir a Inicio (0) siempre y cuando no estemos ya en Inicio.
+                          if (_selectedIndex != idx) {
                             setState(() {
                               _selectedIndex = idx;
                             });
