@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:aura_academy/services/groq_service.dart';
 
@@ -204,6 +204,40 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
     }
   }
 
+  Widget _buildSuggestionChip({
+    required IconData icon,
+    required String label,
+    required String query,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: ActionChip(
+        onPressed: _isLoading
+            ? null
+            : () {
+                _textController.text = query;
+                _sendMessage();
+              },
+        avatar: Icon(icon, size: 14, color: _primary),
+        label: Text(
+          label,
+          style: GoogleFonts.outfit(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1E293B),
+          ),
+        ),
+        backgroundColor: const Color(0xFFF1F5F9),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      ),
+    );
+  }
+
+
   Widget _buildTypingIndicator() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 14),
@@ -339,12 +373,49 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
               },
             ),
           ),
+          // Sugerencias de acciones rápidas
+          Container(
+            height: 48,
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              children: [
+                _buildSuggestionChip(
+                  icon: Icons.play_circle_fill_rounded,
+                  label: "Mis Cursos",
+                  query: "Llévame a mis cursos",
+                ),
+                _buildSuggestionChip(
+                  icon: Icons.search_rounded,
+                  label: "Buscar Python",
+                  query: "Busca un curso de Python",
+                ),
+                _buildSuggestionChip(
+                  icon: Icons.workspace_premium_rounded,
+                  label: "Diplomas",
+                  query: "Abre mis certificados",
+                ),
+                _buildSuggestionChip(
+                  icon: Icons.settings_rounded,
+                  label: "Ajustes",
+                  query: "Abre la configuración",
+                ),
+                _buildSuggestionChip(
+                  icon: Icons.home_filled,
+                  label: "Portada",
+                  query: "Llévame al inicio",
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
           // Input area
           Container(
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
             decoration: const BoxDecoration(
               color: Colors.white,
-              border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
