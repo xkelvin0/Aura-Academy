@@ -18,6 +18,7 @@ import 'package:aura_academy/screens/courses/lesson_player_screen.dart';
 import 'package:aura_academy/screens/dashboard/wishlist_screen.dart';
 import 'package:aura_academy/screens/instructor/instructor_panel_screen.dart'; // <--- Importación nueva
 import 'package:aura_academy/widgets/aura_chat_widget.dart';
+import 'package:aura_academy/screens/certificates/certificates_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   // Canal global para notificar cambios en los cursos (likes, vistas, etc)
