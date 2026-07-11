@@ -5,7 +5,13 @@ import 'package:aura_academy/services/groq_service.dart';
 class AuraChatWidget extends StatefulWidget {
   final Function(AppAction action)? onAction;
   final int currentTabIndex;
-  const AuraChatWidget({super.key, this.onAction, this.currentTabIndex = 0});
+  final String? customSystemPrompt;
+  const AuraChatWidget({
+    super.key, 
+    this.onAction, 
+    this.currentTabIndex = 0, 
+    this.customSystemPrompt,
+  });
 
   @override
   State<AuraChatWidget> createState() => _AuraChatWidgetState();
@@ -19,7 +25,7 @@ class _ChatMessage {
 }
 
 class _AuraChatWidgetState extends State<AuraChatWidget> {
-  final GroqService _groqService = GroqService();
+  late final GroqService _groqService;
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<_ChatMessage> _messages = [];
@@ -31,8 +37,16 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
   @override
   void initState() {
     super.initState();
+    _groqService = GroqService(customSystemPrompt: widget.customSystemPrompt);
+    
+    // Si hay un system prompt personalizado, significa que es un Tutor del Curso
+    final isTutor = widget.customSystemPrompt != null;
+    final welcomeText = isTutor 
+        ? '¡Hola! Soy tu Tutor de Inteligencia Artificial para esta clase de Aura Academy. 🎓🤖\n\n¿Tienes alguna duda sobre los conceptos de esta lección o necesitas ayuda con algún ejercicio? ¡Pregúntame lo que quieras!'
+        : 'Hola! Soy Aura AI 👋\n\nPuedo ayudarte con tus cursos y además puedo navegar la app por ti. Prueba decirme:\n• "Llévame a mis cursos"\n• "Abre mis certificados"\n• "Abre la configuración"\n• O hazme cualquier pregunta académica';
+
     _messages.add(_ChatMessage(
-      text: 'Hola! Soy Aura AI 👋\n\nPuedo ayudarte con tus cursos y además puedo navegar la app por ti. Prueba decirme:\n• "Llévame a mis cursos"\n• "Abre mis certificados"\n• "Abre la configuración"\n• O hazme cualquier pregunta académica',
+      text: welcomeText,
       isUser: false,
     ));
   }
@@ -375,38 +389,39 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
               },
             ),
           ),
-          // Sugerencias de acciones rápidas
-          Container(
-            height: 48,
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              children: [
-                _buildSuggestionChip(
-                  icon: Icons.play_circle_fill_rounded,
-                  label: "Mis Cursos",
-                  query: "Llévame a mis cursos",
-                ),
-                _buildSuggestionChip(
-                  icon: Icons.workspace_premium_rounded,
-                  label: "Diplomas",
-                  query: "Abre mis certificados",
-                ),
-                _buildSuggestionChip(
-                  icon: Icons.settings_rounded,
-                  label: "Ajustes",
-                  query: "Abre la configuración",
-                ),
-                _buildSuggestionChip(
-                  icon: Icons.home_filled,
-                  label: "Portada",
-                  query: "Llévame al inicio",
-                ),
-              ],
+          // Sugerencias de acciones rápidas (Solo mostrar en el chat global, no en el tutor de cursos)
+          if (widget.customSystemPrompt == null)
+            Container(
+              height: 48,
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                children: [
+                  _buildSuggestionChip(
+                    icon: Icons.play_circle_fill_rounded,
+                    label: "Mis Cursos",
+                    query: "Llévame a mis cursos",
+                  ),
+                  _buildSuggestionChip(
+                    icon: Icons.workspace_premium_rounded,
+                    label: "Diplomas",
+                    query: "Abre mis certificados",
+                  ),
+                  _buildSuggestionChip(
+                    icon: Icons.settings_rounded,
+                    label: "Ajustes",
+                    query: "Abre la configuración",
+                  ),
+                  _buildSuggestionChip(
+                    icon: Icons.home_filled,
+                    label: "Portada",
+                    query: "Llévame al inicio",
+                  ),
+                ],
+              ),
             ),
-          ),
           const Divider(height: 1, color: Color(0xFFE2E8F0)),
           // Input area
           Container(

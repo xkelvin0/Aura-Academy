@@ -57,9 +57,10 @@ Reglas generales:
 ''';
 
   final List<GroqMessage> _history = [];
+  final String? customSystemPrompt;
 
-  GroqService() {
-    _history.add(GroqMessage(role: 'system', content: _systemPrompt));
+  GroqService({this.customSystemPrompt}) {
+    _history.add(GroqMessage(role: 'system', content: customSystemPrompt ?? _systemPrompt));
   }
 
   Future<GroqResponse> sendMessage(String userMessage) async {
@@ -108,6 +109,6 @@ Reglas generales:
 
   void clearHistory() {
     _history.clear();
-    _history.add(GroqMessage(role: 'system', content: _systemPrompt));
+    _history.add(GroqMessage(role: 'system', content: customSystemPrompt ?? _systemPrompt));
   }
 }

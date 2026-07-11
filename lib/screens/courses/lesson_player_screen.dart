@@ -8,6 +8,7 @@ import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
 import 'package:confetti/confetti.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:aura_academy/widgets/aura_chat_widget.dart';
 import 'package:aura_academy/screens/certificates/graduation_celebration_screen.dart';
 
 class LessonPlayerScreen extends StatefulWidget {
@@ -643,6 +644,47 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> with TickerProv
     );
   }
 
+  // Abre el modal de Chat Tutor contextualizado
+  void _openTutorChat() {
+    final String courseTitle = _course?['titulo'] ?? "Curso";
+    final String lessonTitle = _currentLesson?['titulo'] ?? "Lección";
+    final String lessonDesc = _currentLesson?['descripcion'] ?? "Sin descripción";
+
+    // Creamos un system prompt personalizado que contextualiza a la IA
+    final String tutorPrompt = '''
+Eres un tutor experto asignado al estudiante en Aura Academy.
+Tu objetivo es resolver dudas sobre el curso "$courseTitle".
+Actualmente, el estudiante está viendo la clase llamada "$lessonTitle".
+Descripción de la lección actual: "$lessonDesc".
+
+Instrucciones:
+1. Responde preguntas teóricas, explica fragmentos de código, corrige errores y da ejemplos didácticos sobre el tema del curso y la clase actual.
+2. NUNCA ejecutes ni expongas acciones en este chat ([ACTION:...]). Este chat es meramente para tutorías académicas y explicaciones.
+3. Sé motivador, conciso y responde siempre en español.
+''';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return AnimatedPadding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          child: SizedBox(
+            height: MediaQuery.of(ctx).size.height * 0.80,
+            child: AuraChatWidget(
+              customSystemPrompt: tutorPrompt,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _triggerGraduation() {
     _confettiController.play();
     Future.delayed(const Duration(milliseconds: 800), () {
@@ -814,6 +856,11 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> with TickerProv
                   ),
                 ],
               ),
+            ),
+            floatingActionButton: FloatingActionButton(
+              onPressed: _openTutorChat,
+              backgroundColor: const Color(0xFF6366F1),
+              child: const Icon(Icons.psychology_rounded, color: Colors.white, size: 28),
             ),
           ),
           // Confetti overlay covering the FULL screen
