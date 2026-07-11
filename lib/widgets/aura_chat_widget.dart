@@ -73,14 +73,6 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
     });
     _scrollToBottom();
 
-    // Ejecutar accion si existe, con un pequeño delay para que el usuario lea la respuesta
-    if (response.action != null && widget.onAction != null) {
-      Future.delayed(const Duration(milliseconds: 1200), () {
-        if (mounted) {
-          widget.onAction!(response.action!);
-        }
-      });
-    }
   }
 
   Widget _buildMessage(_ChatMessage message) {
@@ -156,6 +148,12 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
             const SizedBox(height: 6),
             Padding(
               padding: const EdgeInsets.only(left: 38),
+            GestureDetector(
+              onTap: () {
+                if (widget.onAction != null) {
+                  widget.onAction!(message.action!);
+                }
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
@@ -180,6 +178,7 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
                 ),
               ),
             ),
+            ),
           ],
         ],
       ),
@@ -191,15 +190,15 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
       case 'navigate_tab':
         final labels = ['Inicio', 'Buscar', 'Mis Cursos', 'Perfil'];
         final idx = int.tryParse(action.param ?? '0') ?? 0;
-        return 'Yendo a ${labels[idx]}...';
+        return 'Ir a ${labels[idx]}';
       case 'search_courses':
-        return 'Buscando "${action.param}"...';
+        return 'Buscar "${action.param}"';
       case 'open_certificates':
-        return 'Abriendo Certificados...';
+        return 'Abrir Certificados';
       case 'open_settings':
-        return 'Abriendo Configuracion...';
+        return 'Abrir Configuración';
       default:
-        return 'Ejecutando accion...';
+        return 'Ejecutar acción';
     }
   }
 
