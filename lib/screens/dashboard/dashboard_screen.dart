@@ -22,6 +22,7 @@ import 'package:aura_academy/widgets/aura_chat_widget.dart';
 class DashboardScreen extends StatefulWidget {
   // Canal global para notificar cambios en los cursos (likes, vistas, etc)
   static final courseUpdateController = StreamController<void>.broadcast();
+  static final searchStreamController = StreamController<String>.broadcast();
 
   const DashboardScreen({super.key});
 
@@ -376,7 +377,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   curve: Curves.easeOut,
                   child: SizedBox(
                     height: MediaQuery.of(ctx).size.height * 0.80,
-                    child: const AuraChatWidget(),
+                    child: AuraChatWidget(
+                      onAction: (action) {
+                        if (action.type == 'navigate_tab') {
+                          final idx = int.tryParse(action.param ?? '0') ?? 0;
+                          setState(() {
+                            _selectedIndex = idx;
+                          });
+                        } else if (action.type == 'search_courses') {
+                          setState(() {
+                            _selectedIndex = 1; // Tab de búsqueda/exploración
+                          });
+                          // Usar un delay para dar tiempo a que cargue la pantalla y luego simular la búsqueda
+                          Future.delayed(const Duration(milliseconds: 300), () {
+                            if (action.param != null) {
+                              DashboardScreen.searchStreamController.add(action.param!);
+                            }
+                          });
+                        } else if (action.type == 'open_certificates') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const CertificatesScreen()),
+                          );
+                        } else if (action.type == 'open_settings') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                          );
+                        }
+                      },
+                    ),
                   ),
                 ),
               );

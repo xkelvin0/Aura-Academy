@@ -34,6 +34,13 @@ class _SearchScreenState extends State<SearchScreen> {
     DashboardScreen.courseUpdateController.stream.listen((_) {
       if (mounted) _loadInitialData();
     });
+
+    DashboardScreen.searchStreamController.stream.listen((query) {
+      if (mounted) {
+        _searchController.text = query;
+        _performSearch(query);
+      }
+    });
   }
 
   Future<void> _loadInitialData() async {

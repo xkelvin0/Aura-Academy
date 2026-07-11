@@ -3,7 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:aura_academy/services/groq_service.dart';
 
 class AuraChatWidget extends StatefulWidget {
-  const AuraChatWidget({super.key});
+  final Function(AppAction action)? onAction;
+  const AuraChatWidget({super.key, this.onAction});
 
   @override
   State<AuraChatWidget> createState() => _AuraChatWidgetState();
@@ -12,7 +13,8 @@ class AuraChatWidget extends StatefulWidget {
 class _ChatMessage {
   final String text;
   final bool isUser;
-  _ChatMessage({required this.text, required this.isUser});
+  final AppAction? action;
+  _ChatMessage({required this.text, required this.isUser, this.action});
 }
 
 class _AuraChatWidgetState extends State<AuraChatWidget> {
@@ -29,7 +31,7 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
   void initState() {
     super.initState();
     _messages.add(_ChatMessage(
-      text: 'Hola! Soy Aura AI, tu asistente inteligente. Puedo ayudarte con dudas de tus cursos, conceptos tecnicos y usar la plataforma. En que te puedo ayudar hoy?',
+      text: 'Hola! Soy Aura AI 👋\n\nPuedo ayudarte con tus cursos y ademas puedo navegar la app por ti. Prueba decirme:\n• "Llévame a mis cursos"\n• "Busca un curso de Python"\n• "Abre mis certificados"\n• O hazme cualquier pregunta academica',
       isUser: false,
     ));
   }
@@ -62,80 +64,144 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
       _isLoading = true;
     });
     _scrollToBottom();
+
     final response = await _groqService.sendMessage(text);
+
     setState(() {
-      _messages.add(_ChatMessage(text: response, isUser: false));
+      _messages.add(_ChatMessage(text: response.text, isUser: false, action: response.action));
       _isLoading = false;
     });
     _scrollToBottom();
+
+    // Ejecutar accion si existe, con un pequeño delay para que el usuario lea la respuesta
+    if (response.action != null && widget.onAction != null) {
+      Future.delayed(const Duration(milliseconds: 1200), () {
+        if (mounted) {
+          Navigator.pop(context); // cierra el chat
+          widget.onAction!(response.action!);
+        }
+      });
+    }
   }
 
   Widget _buildMessage(_ChatMessage message) {
     final isUser = message.isUser;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 14),
-      child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
+      child: Column(
+        crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
-          if (!isUser) ...[
-            Container(
-              width: 30,
-              height: 30,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_primary, Color(0xFFA855F7)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.auto_awesome, color: Colors.white, size: 15),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: isUser
-                    ? const LinearGradient(
-                        colors: [_primary, Color(0xFF8B5CF6)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : null,
-                color: isUser ? null : const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18),
-                  topRight: const Radius.circular(18),
-                  bottomLeft: Radius.circular(isUser ? 18 : 4),
-                  bottomRight: Radius.circular(isUser ? 4 : 18),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: isUser
-                        ? _primary.withOpacity(0.25)
-                        : Colors.black.withOpacity(0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+          Row(
+            mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (!isUser) ...[
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [_primary, Color(0xFFA855F7)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
                   ),
-                ],
+                  child: const Icon(Icons.auto_awesome, color: Colors.white, size: 15),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    gradient: isUser
+                        ? const LinearGradient(
+                            colors: [_primary, Color(0xFF8B5CF6)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : null,
+                    color: isUser ? null : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(18),
+                      topRight: const Radius.circular(18),
+                      bottomLeft: Radius.circular(isUser ? 18 : 4),
+                      bottomRight: Radius.circular(isUser ? 4 : 18),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isUser
+                            ? _primary.withOpacity(0.25)
+                            : Colors.black.withOpacity(0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    message.text,
+                    style: GoogleFonts.outfit(
+                      color: isUser ? Colors.white : const Color(0xFF1E293B),
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
               ),
-              child: Text(
-                message.text,
-                style: GoogleFonts.outfit(
-                  color: isUser ? Colors.white : const Color(0xFF1E293B),
-                  fontSize: 14,
-                  height: 1.5,
+              if (isUser) const SizedBox(width: 8),
+            ],
+          ),
+          // Action chip si el bot incluyo una accion
+          if (!isUser && message.action != null) ...[
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 38),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: _primary.withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.touch_app_rounded, color: _primary, size: 14),
+                    const SizedBox(width: 6),
+                    Text(
+                      _actionLabel(message.action!),
+                      style: GoogleFonts.outfit(
+                        color: _primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
-          if (isUser) const SizedBox(width: 8),
+          ],
         ],
       ),
     );
+  }
+
+  String _actionLabel(AppAction action) {
+    switch (action.type) {
+      case 'navigate_tab':
+        final labels = ['Inicio', 'Buscar', 'Mis Cursos', 'Perfil'];
+        final idx = int.tryParse(action.param ?? '0') ?? 0;
+        return 'Yendo a ${labels[idx]}...';
+      case 'search_courses':
+        return 'Buscando "${action.param}"...';
+      case 'open_certificates':
+        return 'Abriendo Certificados...';
+      case 'open_settings':
+        return 'Abriendo Configuracion...';
+      default:
+        return 'Ejecutando accion...';
+    }
   }
 
   Widget _buildTypingIndicator() {
@@ -230,8 +296,11 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Llama 3.3 - En linea',
-                          style: GoogleFonts.outfit(color: const Color(0xFF94A3B8), fontSize: 11),
+                          'Llama 3.3 · Agente activo',
+                          style: GoogleFonts.outfit(
+                            color: const Color(0xFF94A3B8),
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
@@ -297,7 +366,7 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
                       minLines: 1,
                       cursorColor: _primary,
                       decoration: InputDecoration(
-                        hintText: 'Escribe tu pregunta...',
+                        hintText: 'Pregunta algo o pide una accion...',
                         hintStyle: GoogleFonts.outfit(
                           color: const Color(0xFFCBD5E1),
                           fontSize: 14,

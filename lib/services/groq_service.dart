@@ -1,14 +1,26 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:aura_academy/secrets.dart';
 
 class GroqMessage {
-  final String role; // 'user' | 'assistant' | 'system'
+  final String role;
   final String content;
-
   GroqMessage({required this.role, required this.content});
-
   Map<String, dynamic> toJson() => {'role': role, 'content': content};
+}
+
+// Representa una accion que el bot quiere ejecutar en la app
+class AppAction {
+  final String type;     // navigate_tab, search_courses, open_certificates, open_settings
+  final String? param;   // 0=home,1=search,2=courses,3=profile / query de busqueda
+
+  AppAction({required this.type, this.param});
+}
+
+class GroqResponse {
+  final String text;
+  final AppAction? action;
+  GroqResponse({required this.text, this.action});
 }
 
 class GroqService {
@@ -16,18 +28,30 @@ class GroqService {
   static const String _model = 'llama-3.3-70b-versatile';
 
   static const String _systemPrompt = '''
-Eres "Aura AI", el asistente inteligente oficial de Aura Academy.
+Eres "Aura AI", el asistente inteligente oficial de Aura Academy, una plataforma de cursos online.
 Tienes dos roles:
-1. **Tutor académico**: Explicas conceptos de programación, diseño, tecnología y otras materias de los cursos de forma clara y didáctica.
-2. **Asistente de plataforma**: Orientas a los usuarios sobre cómo usar Aura Academy (inscribirse a cursos, ver certificados, calificar cursos, etc.).
+1. Tutor academico: explicas conceptos de programacion, diseno, tecnologia y otras materias.
+2. Asistente de la app: puedes navegar por la app y ejecutar acciones por el usuario.
 
-Reglas:
-- Responde SIEMPRE en español.
-- Sé conciso, amable y motivador.
-- Si no sabes algo, admítelo honestamente.
-- Usa emojis con moderación para hacer la experiencia más amigable.
-- Cuando expliques código, usa bloques de código marcados.
-- Máximo 300 palabras por respuesta salvo que el usuario pida una explicación larga.
+ACCIONES DISPONIBLES EN LA APP:
+- Ir al inicio: escribe [ACTION:navigate_tab:0] en tu respuesta
+- Ir a buscar/explorar cursos: escribe [ACTION:navigate_tab:1]
+- Ir a mis cursos: escribe [ACTION:navigate_tab:2]
+- Ir a mi perfil: escribe [ACTION:navigate_tab:3]
+- Buscar un curso especifico: escribe [ACTION:search_courses:termino_de_busqueda]
+- Abrir mis certificados: escribe [ACTION:open_certificates]
+- Abrir configuracion: escribe [ACTION:open_settings]
+
+CUANDO USAR ACCIONES:
+- Si el usuario dice "llévame a...", "abre...", "quiero ver mis...", "busca un curso de...", etc., incluye la accion al final de tu mensaje.
+- Solo incluye UNA accion por respuesta.
+- Pon la accion al FINAL del texto, en su propia linea.
+
+Reglas generales:
+- Responde SIEMPRE en espanol.
+- Se conciso, amable y motivador.
+- Usa emojis con moderacion.
+- Maximo 200 palabras por respuesta.
 ''';
 
   final List<GroqMessage> _history = [];
@@ -36,7 +60,7 @@ Reglas:
     _history.add(GroqMessage(role: 'system', content: _systemPrompt));
   }
 
-  Future<String> sendMessage(String userMessage) async {
+  Future<GroqResponse> sendMessage(String userMessage) async {
     _history.add(GroqMessage(role: 'user', content: userMessage));
 
     try {
@@ -50,20 +74,33 @@ Reglas:
           'model': _model,
           'messages': _history.map((m) => m.toJson()).toList(),
           'temperature': 0.7,
-          'max_tokens': 1024,
+          'max_tokens': 512,
         }),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
-        final assistantMessage = data['choices'][0]['message']['content'] as String;
-        _history.add(GroqMessage(role: 'assistant', content: assistantMessage));
-        return assistantMessage;
+        final raw = data['choices'][0]['message']['content'] as String;
+
+        // Extraer accion del texto si existe
+        final actionRegex = RegExp(r'\[ACTION:([^:\]]+)(?::([^\]]+))?\]');
+        final match = actionRegex.firstMatch(raw);
+
+        AppAction? action;
+        String cleanText = raw;
+
+        if (match != null) {
+          action = AppAction(type: match.group(1)!, param: match.group(2));
+          cleanText = raw.replaceAll(actionRegex, '').trim();
+        }
+
+        _history.add(GroqMessage(role: 'assistant', content: cleanText));
+        return GroqResponse(text: cleanText, action: action);
       } else {
-        return 'Error ${response.statusCode}: No pude conectarme al servidor. Inténtalo de nuevo.';
+        return GroqResponse(text: 'Error ${response.statusCode}: No pude conectarme. Intentalo de nuevo.');
       }
     } catch (e) {
-      return 'Error de conexión: Asegúrate de tener internet e inténtalo de nuevo.';
+      return GroqResponse(text: 'Error de conexion. Asegurate de tener internet.');
     }
   }
 
