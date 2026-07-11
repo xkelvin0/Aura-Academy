@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:aura_academy/secrets.dart';
 
@@ -43,9 +43,11 @@ ACCIONES DISPONIBLES EN LA APP:
 - Abrir configuracion: escribe [ACTION:open_settings]
 
 CUANDO USAR ACCIONES:
-- Si el usuario dice "llévame a...", "abre...", "quiero ver mis...", "busca un curso de...", etc., incluye la accion al final de tu mensaje.
+- Únicamente incluye una acción si el usuario solicita explícitamente navegar, ir, buscar o abrir una pantalla.
+- NO incluyas ninguna acción para saludos genéricos (como "hola", "buenas"), agradecimientos, charla informal o preguntas teóricas/académicas generales.
 - Solo incluye UNA accion por respuesta.
 - Pon la accion al FINAL del texto, en su propia linea.
+
 
 Reglas generales:
 - Responde SIEMPRE en espanol.
