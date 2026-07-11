@@ -151,8 +151,8 @@ class _AuraChatWidgetState extends State<AuraChatWidget> {
               if (isUser) const SizedBox(width: 8),
             ],
           ),
-          // Action chip si el bot incluyo una accion
-          if (!isUser && message.action != null) ...[
+          // Action chip si el bot incluyo una accion valida (no ignorada como ir a inicio)
+          if (!isUser && message.action != null && !(message.action!.type == 'navigate_tab' && (message.action!.param == '0' || message.action!.param == null))) ...[
             const SizedBox(height: 6),
             Padding(
               padding: const EdgeInsets.only(left: 38),
