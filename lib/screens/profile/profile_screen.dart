@@ -8,6 +8,7 @@ import 'package:aura_academy/screens/certificates/certificates_screen.dart';
 import 'package:aura_academy/screens/dashboard/wishlist_screen.dart';
 import 'package:aura_academy/screens/profile/settings_screen.dart';
 import 'package:aura_academy/screens/auth/welcome_screen.dart';
+import 'package:aura_academy/screens/dashboard/leaderboard_screen.dart';
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -26,6 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _completedCoursesCount = 0;
   int _certificatesCount = 0;
   double _totalStudyHours = 0.0;
+  List<Map<String, dynamic>> _userMedals = [];
 
   @override
   void initState() {
@@ -101,11 +103,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           debugPrint("Error cargando estadísticas analíticas: $e");
         }
 
+        // 3. Cargar medallas ganadas
+        List<Map<String, dynamic>> userMedals = [];
+        try {
+          final medalsRes = await supabase
+              .from('perfiles_medallas')
+              .select('*, medallas(*)')
+              .eq('perfil_id', user.id);
+          userMedals = List<Map<String, dynamic>>.from(medalsRes);
+        } catch (medalErr) {
+          debugPrint("Error al cargar medallas de Supabase: $medalErr");
+        }
+
         setState(() {
           _inProgressCourses = finalEnrollments;
           _completedCoursesCount = completedCount;
           _certificatesCount = certsCount;
           _totalStudyHours = studyHours;
+          _userMedals = userMedals;
           _isLoading = false;
         });
       }
@@ -141,8 +156,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildAccessMenu(),
               const SizedBox(height: 32),
               _buildDailyImpulse(),
-              const SizedBox(height: 32),
-              _buildInProgressSection(),
               const SizedBox(height: 32),
               _buildLogoutButton(),
               const SizedBox(height: 40),
@@ -231,6 +244,421 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ],
     );
+  }
+
+  // Tarjeta de Nivel y Puntos de Experiencia (Gamificación)
+  Widget _buildXPCard() {
+    final int xp = _profileData?['xp_total'] ?? 0;
+    // Sistema XP progresivo: nivel N requiere N*200 XP para subir
+    // XP acumulado para nivel N = 100 * N * (N-1)
+    // Ej: nivel 2 = 200 XP, nivel 3 = 600 XP, nivel 4 = 1200 XP
+    int nivel = 1;
+    while (100 * nivel * (nivel + 1) <= xp) nivel++;
+    final int xpParaNivelActual = 100 * (nivel - 1) * nivel;
+    final int xpParaSiguienteNivel = 100 * nivel * (nivel + 1);
+    final int xpEnNivelActual = xp - xpParaNivelActual;
+    final int xpNecesarioEnNivel = xpParaSiguienteNivel - xpParaNivelActual;
+    final double progresoNivel = (xpEnNivelActual / xpNecesarioEnNivel).clamp(0.0, 1.0);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFF4F46E5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6366F1).withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "NIVEL $nivel",
+                    style: GoogleFonts.montserrat(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    "Rango: Estudiante Aura",
+                    style: GoogleFonts.outfit(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  "$xp XP",
+                  style: GoogleFonts.montserrat(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          LinearProgressIndicator(
+            value: progresoNivel,
+            backgroundColor: Colors.white.withOpacity(0.15),
+            color: const Color(0xFF2DD4BF), // Turquesa premium para el progreso
+            minHeight: 8,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "$xp / $xpParaSiguienteNivel XP",
+                style: GoogleFonts.outfit(
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: 11,
+                ),
+              ),
+              Text(
+                "Nivel ${nivel + 1} en ${xpParaSiguienteNivel - xp} XP",
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Sección de Medallas / Insignias ganadas
+  Widget _buildMedalsSection() {
+    // Definimos las 4 medallas del sistema con sus correspondientes metadatos
+    final List<Map<String, String>> medallasDelSistema = [
+      {
+        'tipo': 'PRIMERA_LECCION',
+        'nombre': 'Paso Inicial',
+        'desc': 'Completa tu primera lección en la plataforma.',
+        'icono': 'play_circle_fill',
+      },
+      {
+        'tipo': 'ESTUDIO_NOCTURNO',
+        'nombre': 'Estudiante Nocturno',
+        'desc': 'Completa una lección de estudio después de las 11:00 PM.',
+        'icono': 'nights_stay',
+      },
+      {
+        'tipo': 'RACHA_7',
+        'nombre': 'Constancia Pura',
+        'desc': 'Consigue una racha de estudio activa de 7 días.',
+        'icono': 'local_fire_department',
+      },
+      {
+        'tipo': 'PRIMER_DIPLOMA',
+        'nombre': 'Devorador de Cursos',
+        'desc': 'Gradúate y obtén tu primer diploma en Aura Academy.',
+        'icono': 'school',
+      },
+    ];
+
+    // Verificar cuáles de las medallas tiene el usuario realmente ganadas
+    final ganadasTipos = _userMedals.map((m) => m['medallas']?['requisito_tipo']?.toString()).toSet();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "Mis Medallas / Logros",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            Text(
+              "${ganadasTipos.length} de ${medallasDelSistema.length} obtenidas",
+              style: GoogleFonts.outfit(
+                color: const Color(0xFF6366F1),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: medallasDelSistema.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.15,
+          ),
+          itemBuilder: (context, index) {
+            final medalla = medallasDelSistema[index];
+            final bool hasEarned = ganadasTipos.contains(medalla['tipo']);
+
+            IconData iconData;
+            switch (medalla['icono']) {
+              case 'nights_stay':
+                iconData = Icons.nights_stay_rounded;
+                break;
+              case 'local_fire_department':
+                iconData = Icons.local_fire_department_rounded;
+                break;
+              case 'school':
+                iconData = Icons.school_rounded;
+                break;
+              default:
+                iconData = Icons.play_circle_fill_rounded;
+            }
+
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: hasEarned ? const Color(0xFFF5F3FF) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: hasEarned ? const Color(0xFFC7D2FE) : Colors.grey.shade200,
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    iconData,
+                    color: hasEarned ? const Color(0xFF6366F1) : Colors.grey.shade400,
+                    size: 26,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    medalla['nombre']!,
+                    style: GoogleFonts.montserrat(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                      color: hasEarned ? const Color(0xFF1E293B) : Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    medalla['desc']!,
+                    style: GoogleFonts.outfit(
+                      fontSize: 8.5,
+                      color: Colors.grey.shade500,
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // Muestra el bottom sheet premium con la tabla de clasificación semanal
+  void _showLeaderboardBottomSheet() async {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.of(ctx).size.height * 0.75,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: _fetchLeaderboardData(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF6366F1)));
+              }
+              if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(
+                  child: Text(
+                    "No hay clasificaciones registradas esta semana.",
+                    style: GoogleFonts.outfit(color: Colors.grey),
+                  ),
+                );
+              }
+
+              final ranking = snapshot.data!;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Icon(Icons.emoji_events_rounded, color: Color(0xFFF59E0B), size: 28),
+                      const SizedBox(width: 10),
+                      Text(
+                        "Clasificación Semanal",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Estudiantes con más constancia esta semana en Aura Academy",
+                    style: GoogleFonts.outfit(color: const Color(0xFF64748B), fontSize: 12),
+                  ),
+                  const SizedBox(height: 24),
+                  // Lista de clasificación
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: ranking.length,
+                      itemBuilder: (context, idx) {
+                        final item = ranking[idx];
+                        final perfil = item['perfiles'];
+                        final double horas = double.tryParse(item['horas_estudiadas']?.toString() ?? '0.0') ?? 0.0;
+                        final String nombre = perfil?['nombre_completo'] ?? "Usuario Aura";
+                        final String avatar = perfil?['avatar_url'] ?? "";
+
+                        // Puestos destacados con colores
+                        Color itemColor = const Color(0xFFF8FAFC);
+                        Widget leadWidget = Text(
+                          "${idx + 1}",
+                          style: GoogleFonts.montserrat(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: const Color(0xFF64748B),
+                          ),
+                        );
+
+                        if (idx == 0) {
+                          itemColor = const Color(0xFFFEF3C7); // Dorado
+                          leadWidget = const Icon(Icons.emoji_events_rounded, color: Color(0xFFD97706), size: 22);
+                        } else if (idx == 1) {
+                          itemColor = const Color(0xFFF1F5F9); // Plata
+                          leadWidget = const Icon(Icons.emoji_events_rounded, color: Color(0xFF64748B), size: 22);
+                        } else if (idx == 2) {
+                          itemColor = const Color(0xFFFFEDD5); // Bronce
+                          leadWidget = const Icon(Icons.emoji_events_rounded, color: Color(0xFFC2410C), size: 22);
+                        }
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: itemColor,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              SizedBox(width: 24, child: Center(child: leadWidget)),
+                              const SizedBox(width: 12),
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: const Color(0xFFE2E8F0),
+                                backgroundImage: avatar.isNotEmpty ? NetworkImage(avatar) : null,
+                                child: avatar.isEmpty
+                                    ? Text(
+                                        nombre.substring(0, 1).toUpperCase(),
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                      )
+                                    : null,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  nombre,
+                                  style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF1E293B),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                "${horas}h",
+                                style: GoogleFonts.montserrat(
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF6366F1),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  // Método auxiliar para consultar los datos del ranking de metas semanales de esta semana
+  Future<List<Map<String, dynamic>>> _fetchLeaderboardData() async {
+    final vLunes = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+    final String semanaInicioStr = "${vLunes.year}-${vLunes.month.toString().padLeft(2, '0')}-${vLunes.day.toString().padLeft(2, '0')}";
+
+    try {
+      final res = await supabase
+          .from('metas_semanales')
+          .select('*, perfiles(*)')
+          .eq('semana_inicio', semanaInicioStr)
+          .order('horas_estudiadas', ascending: false)
+          .limit(10);
+      return List<Map<String, dynamic>>.from(res);
+    } catch (e) {
+      debugPrint("Error consultando metas_semanales: $e");
+      return [];
+    }
   }
 
   String _formatStudyTime(double decimalHours) {
@@ -406,7 +834,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const MyCoursesScreen()),
-            );
+            ).then((_) => _loadProfileStats());
           },
         ),
         _buildListTile(
@@ -417,6 +845,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               context,
               MaterialPageRoute(builder: (context) => const CertificatesScreen()),
             );
+          },
+        ),
+        _buildListTile(
+          Icons.emoji_events_rounded, 
+          "Centro de Logros",
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const LeaderboardScreen()),
+            ).then((_) => _loadProfileStats());
           },
         ),
         _buildListTile(

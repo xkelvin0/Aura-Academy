@@ -13,6 +13,7 @@ import 'package:aura_academy/screens/courses/search_screen.dart';
 import 'package:aura_academy/screens/courses/my_courses_screen.dart';
 import 'package:aura_academy/screens/profile/edit_profile_screen.dart';
 import 'package:aura_academy/screens/profile/settings_screen.dart';
+import 'package:aura_academy/screens/dashboard/leaderboard_screen.dart';
 import 'package:aura_academy/screens/instructor/course_structure_screen.dart';
 import 'package:aura_academy/screens/courses/lesson_player_screen.dart';
 import 'package:aura_academy/screens/dashboard/wishlist_screen.dart';
@@ -95,11 +96,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .eq('en_progreso', true)
             .order('ultima_vez_visto', ascending: false);
             
-        // 3. Obtener Cursos Destacados de la Tienda global (Mejor puntuados y más vistos)
+        // 3. Obtener Cursos Destacados de la Tienda global
         final featuredRes = await supabase
             .from('cursos')
             .select('*, perfiles(nombre_completo)') 
             .order('rating_promedio', ascending: false)
+            .order('likes_count', ascending: false)
             .order('vistas', ascending: false)
             .limit(10);
             
@@ -676,93 +678,117 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Builder(
-              builder: (context) => IconButton(
-                icon: const Icon(Icons.menu_rounded, size: 28),
-                onPressed: () => Scaffold.of(context).openDrawer(),
+        Expanded(
+          child: Row(
+            children: [
+              Builder(
+                builder: (context) => IconButton(
+                  icon: const Icon(Icons.menu_rounded, size: 28),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                ),
               ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  "Aura Academy",
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.cinzel(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF6366F1),
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Botón Copa / Trofeo independiente
+            IconButton(
+              icon: const Icon(Icons.emoji_events_rounded, color: Color(0xFFF59E0B), size: 24),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LeaderboardScreen()),
+                );
+              },
             ),
-            const SizedBox(width: 8),
-            Text(
-              "Aura Academy",
-              style: GoogleFonts.cinzel(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF6366F1),
-                letterSpacing: 1.2,
+            // Avatar de Perfil con detector de gestos
+            GestureDetector(
+              onTap: () => setState(() => _selectedIndex = 3),
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: _profileStream,
+                builder: (context, snapshot) {
+                  String initials = "U";
+                  String? avatarUrl;
+                  
+                  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                    final profile = snapshot.data!.first;
+                    final name = profile['nombre_completo'] ?? "Usuario";
+                    initials = _getInitials(name);
+                    avatarUrl = profile['avatar_url'];
+                  } else {
+                    initials = _getInitials(_userName);
+                  }
+
+                  final bool hasAvatar = avatarUrl != null && avatarUrl.toString().trim().isNotEmpty;
+
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (snapshot.hasData && snapshot.data!.isNotEmpty) ...[
+                        Builder(
+                          builder: (context) {
+                            final racha = snapshot.data!.first['racha_dias'] ?? 0;
+                            if (racha == 0) return const SizedBox();
+                            return Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF7ED),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFFFED7AA)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.local_fire_department, color: Color(0xFFF97316), size: 12),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    racha.toString(),
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFFEA580C),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundColor: const Color(0xFF6366F1),
+                        backgroundImage: hasAvatar ? NetworkImage(avatarUrl.toString()) : null,
+                        child: !hasAvatar 
+                            ? Text(
+                                initials,
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                              )
+                            : null,
+                      ),
+                    ],
+                  );
+                }
               ),
             ),
           ],
-        ),
-        GestureDetector(
-          onTap: () => setState(() => _selectedIndex = 3),
-          child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: _profileStream,
-            builder: (context, snapshot) {
-              String initials = "U";
-              String? avatarUrl;
-              
-              if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                final profile = snapshot.data!.first;
-                final name = profile['nombre_completo'] ?? "Usuario";
-                initials = _getInitials(name);
-                avatarUrl = profile['avatar_url'];
-              } else {
-                initials = _getInitials(_userName);
-              }
-
-              final bool hasAvatar = avatarUrl != null && avatarUrl.toString().trim().isNotEmpty;
-
-              return Row(
-                children: [
-                  if (snapshot.hasData && snapshot.data!.isNotEmpty) ...[
-                    Builder(
-                      builder: (context) {
-                        final racha = snapshot.data!.first['racha_dias'] ?? 0;
-                        if (racha == 0) return const SizedBox();
-                        return Container(
-                          margin: const EdgeInsets.only(right: 12),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFF7ED),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFFED7AA)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.local_fire_department, color: Color(0xFFF97316), size: 14),
-                              const SizedBox(width: 4),
-                              Text(
-                                racha.toString(),
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFFEA580C),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: const Color(0xFF6366F1),
-                    backgroundImage: hasAvatar ? NetworkImage(avatarUrl.toString()) : null,
-                    child: !hasAvatar 
-                        ? Text(
-                            initials,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                          )
-                        : null,
-                  ),
-                ],
-              );
-            }
-          ),
         ),
       ],
     );
@@ -996,7 +1022,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 initialLessonId: targetLessonId!,
                               ),
                             ),
-                          );
+                          ).then((_) => _loadData());
                         } else if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("Este curso aún no tiene lecciones publicadas.")),
@@ -1111,7 +1137,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildInstructorCoursesHorizontal() {
     return SizedBox(
-      height: 290, // Aumentamos la altura para evitar el overflow de 7px
+      height: 310, // Aumentamos la altura para evitar el overflow por las estadísticas
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: _myCreatedCourses.length,
@@ -1170,6 +1196,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.star_rounded, color: Colors.amber, size: 14),
+                          const SizedBox(width: 4),
+                          Text(curso['rating_promedio']?.toString() ?? "0.0", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 12),
+                          const Icon(Icons.remove_red_eye_rounded, color: Colors.grey, size: 14),
+                          const SizedBox(width: 4),
+                          Text(curso['vistas']?.toString() ?? "0", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                          const SizedBox(width: 12),
+                          const Icon(Icons.favorite_rounded, color: Colors.redAccent, size: 14),
+                          const SizedBox(width: 4),
+                          Text(curso['likes_count']?.toString() ?? "0", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(

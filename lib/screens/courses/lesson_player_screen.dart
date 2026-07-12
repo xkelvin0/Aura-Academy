@@ -10,6 +10,7 @@ import 'package:confetti/confetti.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:aura_academy/widgets/aura_chat_widget.dart';
 import 'package:aura_academy/screens/certificates/graduation_celebration_screen.dart';
+import 'package:aura_academy/screens/dashboard/leaderboard_screen.dart';
 
 class LessonPlayerScreen extends StatefulWidget {
   final String courseId;
@@ -192,6 +193,14 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> with TickerProv
           if (targetLessonId == _currentLesson?['id']) _isCompleted = false;
         });
       } else {
+        // Guardar XP y medallas ANTES de insertar para comparar luego
+        final profileBefore = await supabase.from('perfiles').select('xp_total').eq('id', user.id).maybeSingle();
+        final int oldXp = profileBefore?['xp_total'] ?? 0;
+        final int oldLevel = (oldXp ~/ 1000) + 1;
+
+        final beforeMedals = await supabase.from('perfiles_medallas').select('medalla_id').eq('perfil_id', user.id);
+        final beforeSet = (beforeMedals as List).map((m) => m['medalla_id'].toString()).toSet();
+
         await supabase.from('lecciones_completadas').insert({
           'perfil_id': user.id,
           'curso_id': widget.courseId,
@@ -209,6 +218,103 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> with TickerProv
           debugPrint("Error audio: $e");
         }
 
+        // Verificar si subio de nivel
+        if (mounted) {
+          final profileAfter = await supabase.from('perfiles').select('xp_total').eq('id', user.id).maybeSingle();
+          final int newXp = profileAfter?['xp_total'] ?? 0;
+          final int newLevel = (newXp ~/ 1000) + 1;
+
+          if (newLevel > oldLevel) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: const Color(0xFF1E293B),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                margin: const EdgeInsets.all(16),
+                duration: const Duration(seconds: 6),
+                content: Row(
+                  children: [
+                    const Icon(Icons.arrow_upward_rounded, color: Color(0xFF34D399), size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text("¡Subiste al Nivel $newLevel!",
+                            style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white)),
+                          Text("Toca VER para celebrar.",
+                            style: GoogleFonts.outfit(fontSize: 10, color: Colors.white70)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                action: SnackBarAction(
+                  label: "VER",
+                  textColor: const Color(0xFF34D399),
+                  onPressed: () {
+                    LeaderboardScreen.pendingLevelUp = true;
+                    LeaderboardScreen.pendingNewLevel = newLevel;
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/leaderboard');
+                  },
+                ),
+              ),
+            );
+          }
+        }
+
+        // Verificar si se desbloqueó una medalla
+        if (mounted) {
+          final afterMedals = await supabase.from('perfiles_medallas').select('*, medallas(*)').eq('perfil_id', user.id);
+          final newUnlocked = (afterMedals as List).firstWhere(
+            (m) => !beforeSet.contains(m['medalla_id'].toString()),
+            orElse: () => null,
+          );
+
+          if (newUnlocked != null) {
+            final medalla = newUnlocked['medallas'];
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: const Color(0xFF1E293B),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                margin: const EdgeInsets.all(16),
+                duration: const Duration(seconds: 5),
+                content: Row(
+                  children: [
+                    const Icon(Icons.military_tech_rounded, color: Color(0xFFF59E0B), size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text("¡Nuevo logro desbloqueado!",
+                            style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white)),
+                          Text("Medalla: ${medalla['nombre']}. Toca para ver.",
+                            style: GoogleFonts.outfit(fontSize: 10, color: Colors.white70)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                action: SnackBarAction(
+                  label: "VER",
+                  textColor: const Color(0xFF8B5CF6),
+                  onPressed: () {
+                    LeaderboardScreen.pendingMedalName = medalla['nombre'];
+                    LeaderboardScreen.pendingMedalDesc = medalla['descripcion'];
+                    LeaderboardScreen.pendingMedalIcon = medalla['icono_nombre'];
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/leaderboard');
+                  },
+                ),
+              ),
+            );
+          }
+        }
       }
     } catch (e) {
       debugPrint("Error: $e");

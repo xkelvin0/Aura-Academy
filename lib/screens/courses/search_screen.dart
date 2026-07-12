@@ -22,6 +22,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Timer? _debounce;
   List<String> _wishlistIds = []; // <--- IDs de cursos favoritos
 
+  String _currentSort = 'Destacados';
   List<Map<String, dynamic>> _dbCategories = [];
   String? _selectedCategoryId;
 
@@ -69,7 +70,9 @@ class _SearchScreenState extends State<SearchScreen> {
       final res = await supabase
           .from('cursos')
           .select('*, perfiles(nombre_completo)') 
-          .order('fecha_creacion', ascending: false);
+          .order('rating_promedio', ascending: false)
+          .order('likes_count', ascending: false)
+          .order('vistas', ascending: false);
       
       if (mounted) {
         setState(() {
@@ -183,6 +186,22 @@ class _SearchScreenState extends State<SearchScreen> {
         
         return matchesText;
       }).toList();
+
+      // Aplicar ordenamiento
+      _filteredCourses.sort((a, b) {
+        if (_currentSort == 'Más vistos') {
+          return (b['vistas'] as int? ?? 0).compareTo(a['vistas'] as int? ?? 0);
+        } else if (_currentSort == 'Más me gustas') {
+          return (b['likes_count'] as int? ?? 0).compareTo(a['likes_count'] as int? ?? 0);
+        } else {
+          // Destacados: rating -> likes -> vistas
+          int ratingCompare = (b['rating_promedio'] as num? ?? 0).compareTo(a['rating_promedio'] as num? ?? 0);
+          if (ratingCompare != 0) return ratingCompare;
+          int likesCompare = (b['likes_count'] as int? ?? 0).compareTo(a['likes_count'] as int? ?? 0);
+          if (likesCompare != 0) return likesCompare;
+          return (b['vistas'] as int? ?? 0).compareTo(a['vistas'] as int? ?? 0);
+        }
+      });
     });
   }
 
@@ -222,12 +241,25 @@ class _SearchScreenState extends State<SearchScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Explorar Catálogo",
-            style: GoogleFonts.montserrat(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Explorar Catálogo",
+                style: GoogleFonts.montserrat(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  setState(() => _isLoading = true);
+                  _loadInitialData();
+                },
+                icon: const Icon(Icons.refresh, color: Color(0xFF6366F1)),
+                tooltip: "Recargar Catálogo",
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Container(
@@ -279,9 +311,35 @@ class _SearchScreenState extends State<SearchScreen> {
         const SizedBox(height: 24),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Text(
-            query.isEmpty && _selectedCategoryId == null ? "Todos los Cursos" : "Resultados de búsqueda",
-            style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.bold),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                query.isEmpty && _selectedCategoryId == null ? "Todos los Cursos" : "Resultados",
+                style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              DropdownButton<String>(
+                value: _currentSort,
+                icon: const Icon(Icons.sort, size: 18, color: Color(0xFF6366F1)),
+                underline: const SizedBox(),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _currentSort = newValue;
+                      _performSearch(_searchController.text.trim());
+                    });
+                  }
+                },
+                items: <String>['Destacados', 'Más vistos', 'Más me gustas']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
@@ -443,22 +501,23 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                   ),
                 ),
-                // Rating arriba a la derecha
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.star_rounded, color: Colors.amber, size: 12),
-                        const SizedBox(width: 2),
-                        Text(rating, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10)),
-                      ],
+                // Rating arriba a la derecha (solo si no es 0)
+                if (rating != "0.0" && rating != "0")
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.star_rounded, color: Colors.amber, size: 12),
+                          const SizedBox(width: 2),
+                          Text(rating, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10)),
+                        ],
+                      ),
                     ),
                   ),
-                ),
                 // Badge de Oferta abajo a la izquierda
                 if (c['en_oferta'] == true)
                   Positioned(

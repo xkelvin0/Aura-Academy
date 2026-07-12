@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:aura_academy/screens/auth/welcome_screen.dart';
 import 'package:aura_academy/screens/dashboard/dashboard_screen.dart';
 import 'package:aura_academy/screens/courses/category_selection_screen.dart';
+import 'package:aura_academy/screens/dashboard/leaderboard_screen.dart';
 import 'supabase_config.dart';
 
 // Controlador global para el tema
@@ -18,6 +19,9 @@ Future<void> main() async {
     url: SupabaseConfig.supabaseUrl,
     anonKey: SupabaseConfig.supabaseAnonKey,
   );
+
+  // BORRADO DE SESIÓN FORZADO (Temporal para destrabar el emulador)
+  await Supabase.instance.client.auth.signOut();
 
   runApp(const AuraApp());
 }
@@ -55,6 +59,9 @@ class AuraApp extends StatelessWidget {
             ),
             scaffoldBackgroundColor: const Color(0xFF020617),
           ),
+          routes: {
+            '/leaderboard': (context) => const LeaderboardScreen(),
+          },
           home: StreamBuilder<AuthState>(
             stream: Supabase.instance.client.auth.onAuthStateChange,
             builder: (context, snapshot) {

@@ -96,12 +96,39 @@ class _InstructorPanelScreenState extends State<InstructorPanelScreen> {
           final myCourseIds = (rawCourses as List).map((c) => c['id']).toList();
           
           if (myCourseIds.isNotEmpty) {
-            activityRes = await supabase
+            final inscRes = await supabase
                 .from('inscripciones')
-                .select('*, perfiles(nombre_completo), cursos(titulo)')
+                .select('created_at, perfiles(nombre_completo), cursos(titulo)')
                 .inFilter('curso_id', myCourseIds)
                 .order('created_at', ascending: false)
                 .limit(5);
+
+            final certRes = await supabase
+                .from('certificados')
+                .select('fecha_emision, perfiles(nombre_completo), cursos(titulo)')
+                .inFilter('curso_id', myCourseIds)
+                .order('fecha_emision', ascending: false)
+                .limit(5);
+                
+            List<Map<String, dynamic>> combinedActivity = [];
+            for (var ins in inscRes) {
+              combinedActivity.add({
+                'tipo': 'inscripcion',
+                'fecha': ins['created_at'],
+                'alumno': ins['perfiles']['nombre_completo'],
+                'curso': ins['cursos']['titulo'],
+              });
+            }
+            for (var cert in certRes) {
+              combinedActivity.add({
+                'tipo': 'graduacion',
+                'fecha': cert['fecha_emision'],
+                'alumno': cert['perfiles']['nombre_completo'],
+                'curso': cert['cursos']['titulo'],
+              });
+            }
+            combinedActivity.sort((a, b) => b['fecha'].compareTo(a['fecha']));
+            activityRes = combinedActivity.take(5).toList();
                 
             // --- CÁLCULO PARA EL GRÁFICO (Últimos 7 días) ---
             final now = DateTime.now();
@@ -388,45 +415,57 @@ class _InstructorPanelScreenState extends State<InstructorPanelScreen> {
       children: displayList.asMap().entries.map((entry) {
         final index = entry.key;
         final course = entry.value;
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.01), blurRadius: 10)],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 32, height: 32,
-                decoration: BoxDecoration(
-                  color: index == 0 ? const Color(0xFFFFB800) : const Color(0xFFF1F5F9),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    "${index + 1}",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 12, 
-                      fontWeight: FontWeight.bold, 
-                      color: index == 0 ? Colors.white : const Color(0xFF64748B)
+        final bool isTop = index == 0;
+        return InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CourseDetailScreen(courseId: course['id'])),
+            );
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: isTop ? const Color(0xFFFDE68A) : Colors.transparent, width: 2),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: isTop ? const Color(0xFFF59E0B) : const Color(0xFFF1F5F9),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      "${index + 1}",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 12, 
+                        fontWeight: FontWeight.bold, 
+                        color: index == 0 ? Colors.white : const Color(0xFF64748B)
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(course['titulo'] ?? "", style: GoogleFonts.montserrat(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text("${course['real_students']} alumnos", style: GoogleFonts.montserrat(fontSize: 11, color: const Color(0xFF94A3B8))),
-                  ],
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(course['titulo'] ?? "", style: GoogleFonts.montserrat(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text("${course['real_students']} alumnos", style: GoogleFonts.montserrat(fontSize: 11, color: const Color(0xFF94A3B8))),
+                    ],
+                  ),
                 ),
-              ),
-              const Icon(Icons.chevron_right_rounded, color: Color(0xFFCBD5E1)),
-            ],
+                const Icon(Icons.chevron_right_rounded, color: Color(0xFFCBD5E1)),
+              ],
+            ),
           ),
         );
       }).toList(),
@@ -450,8 +489,13 @@ class _InstructorPanelScreenState extends State<InstructorPanelScreen> {
   }
 
   Widget _buildActivityItem(Map<String, dynamic> activity) {
-    final studentName = activity['perfiles']?['nombre_completo'] ?? "Alumno";
-    final courseTitle = activity['cursos']?['titulo'] ?? "un curso";
+    final bool isGraduation = activity['tipo'] == 'graduacion';
+    final studentName = activity['alumno'] ?? activity['perfiles']?['nombre_completo'] ?? "Alumno";
+    final courseTitle = activity['curso'] ?? activity['cursos']?['titulo'] ?? "un curso";
+    final String actionText = isGraduation ? " se graduó de " : " se inscribió en ";
+    final IconData icon = isGraduation ? Icons.school_rounded : Icons.person_add_alt_1_rounded;
+    final Color iconColor = isGraduation ? const Color(0xFFF59E0B) : const Color(0xFF6366F1);
+    final Color bgColor = isGraduation ? const Color(0xFFFEF3C7) : const Color(0xFFE8E7FF);
     
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -465,8 +509,8 @@ class _InstructorPanelScreenState extends State<InstructorPanelScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: const Color(0xFFE8E7FF), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.person_add_alt_1_rounded, color: Color(0xFF6366F1), size: 20),
+            decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: iconColor, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -478,7 +522,7 @@ class _InstructorPanelScreenState extends State<InstructorPanelScreen> {
                     style: GoogleFonts.montserrat(fontSize: 13, color: const Color(0xFF1E293B)),
                     children: [
                       TextSpan(text: studentName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      const TextSpan(text: " se inscribió en "),
+                      TextSpan(text: actionText),
                       TextSpan(text: courseTitle, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF6366F1))),
                     ],
                   ),
