@@ -493,59 +493,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
 
-              const SizedBox(height: 28),
-
-              // --- Divisor "O CONTINÚA CON" ---
-              Row(
-                children: [
-                  Expanded(
-                    child: Divider(color: Colors.grey[300], thickness: 1.5),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text(
-                      'O CONTINÚA CON',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFFCBD5E1),
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Divider(color: Colors.grey[300], thickness: 1.5),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // --- Botones sociales (ambos claros en esta pantalla) ---
-              Row(
-                children: [
-                  // Botón Google
-                  Expanded(
-                    child: _SocialButtonRegister(
-                      label: 'Google',
-                      icon: const Icon(Icons.g_mobiledata,
-                          color: Color(0xFFDB4437), size: 20),
-                      onTap: _registrarConGoogle, // OAuth con Supabase
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Botón GitHub (reemplaza Apple)
-                  Expanded(
-                    child: _SocialButtonRegister(
-                      label: 'GitHub',
-                      icon: const Icon(Icons.code,
-                          color: Color(0xFF1E293B), size: 24),
-                      onTap: _registrarConGitHub, // OAuth con Supabase
-                    ),
-                  ),
-                ],
-              ),
-
               const SizedBox(height: 32),
 
               // --- Enlace para ir al Login ---
